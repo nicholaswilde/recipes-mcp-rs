@@ -1,1 +1,29 @@
-# Implementation Plan: Initialize project and implement core recipe scraping functionality\n\n## Phase 1: Project Foundations\n- [ ] Task: Initialize Cargo project and folder structure\n    - [ ] Create \`Cargo.toml\` with initial dependencies\n    - [ ] Set up basic module structure (\`src/main.rs\`, \`src/config.rs\`, \`src/scraper.rs\`)\n- [ ] Task: Implement configuration system\n    - [ ] Write tests for multi-format config loading\n    - [ ] Implement TOML, YAML, and JSON parsing with Serde\n    - [ ] Implement ENV and CLI argument overrides using Clap\n- [ ] Task: Conductor - User Manual Verification 'Project Foundations' (Protocol in workflow.md)\n\n## Phase 2: Core Scraping Logic\n- [ ] Task: Integrate scraping libraries\n    - [ ] Write tests for basic URL scraping\n    - [ ] Implement recipe extraction using \`recipe-scraper\` and \`rust-recipe\`\n- [ ] Task: Refine data extraction\n    - [ ] Write tests for ingredient and step parsing\n    - [ ] Implement granular parsing for structured recipe output\n- [ ] Task: Conductor - User Manual Verification 'Core Scraping Logic' (Protocol in workflow.md)\n\n## Phase 3: MCP Integration and Validation\n- [ ] Task: Implement MCP Server interface\n    - [ ] Write tests for MCP tool registration\n    - [ ] Set up basic MCP server loop and register the \`scrape_recipe\` tool\n- [ ] Task: Final Validation and Testing\n    - [ ] Write integration tests for the full scraping flow\n    - [ ] Ensure >80% code coverage across all new modules\n- [ ] Task: Conductor - User Manual Verification 'MCP Integration and Validation' (Protocol in workflow.md)
+# Implementation Plan: Initialize project and implement core recipe scraping functionality
+
+## Phase 1: Project Foundations
+- [ ] Task: Initialize Cargo project and folder structure
+    - [ ] Create `Cargo.toml` with initial dependencies
+    - [ ] Set up basic module structure (`src/main.rs`, `src/config.rs`, `src/scraper.rs`)
+- [ ] Task: Implement configuration system
+    - [ ] Write tests for multi-format config loading
+    - [ ] Implement TOML, YAML, and JSON parsing with Serde
+    - [ ] Implement ENV and CLI argument overrides using Clap
+- [ ] Task: Conductor - User Manual Verification 'Phase 1: Project Foundations' (Protocol in workflow.md)
+
+## Phase 2: Core Scraping Logic
+- [ ] Task: Integrate scraping libraries
+    - [ ] Write tests for basic URL scraping
+    - [ ] Implement recipe extraction using `recipe-scraper` and `rust-recipe`
+- [ ] Task: Refine data extraction
+    - [ ] Write tests for ingredient and step parsing
+    - [ ] Implement granular parsing for structured recipe output
+- [ ] Task: Conductor - User Manual Verification 'Phase 2: Core Scraping Logic' (Protocol in workflow.md)
+
+## Phase 3: MCP Integration and Validation
+- [ ] Task: Implement MCP Server interface
+    - [ ] Write tests for MCP tool registration
+    - [ ] Set up basic MCP server loop and register the `scrape_recipe` tool
+- [ ] Task: Final Validation and Testing
+    - [ ] Write integration tests for the full scraping flow
+    - [ ] Ensure >80% code coverage across all new modules
+- [ ] Task: Conductor - User Manual Verification 'Phase 3: MCP Integration and Validation' (Protocol in workflow.md)
