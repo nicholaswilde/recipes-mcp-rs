@@ -15,7 +15,7 @@
     - [x] **TDD:** Write integration tests (manual or automated) for the new tool schema.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: MCP Tool Implementation' (Protocol in workflow.md)
 
-## Phase 3: Quality and Cleanup
+## Phase 3: Quality and Cleanup [checkpoint: f1d1dd0]
 - [x] Task: Final Quality Audit
     - [ ] Run `task test:ci` to ensure all tests pass and coverage is maintained.
     - [ ] Verify `list_tools` output via manual execution.
