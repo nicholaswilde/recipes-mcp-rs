@@ -1,6 +1,6 @@
 # Implementation Plan: Initialize project and implement core recipe scraping functionality
 
-## Phase 1: Project Foundations
+## Phase 1: Project Foundations [checkpoint: a921256]
 - [x] Task: Initialize Cargo project and folder structure
     - [x] Create `Cargo.toml` with initial dependencies
     - [x] Set up basic module structure (`src/main.rs`, `src/config.rs`, `src/scraper.rs`)
