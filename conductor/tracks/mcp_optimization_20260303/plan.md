@@ -1,6 +1,6 @@
 # Implementation Plan: MCP Token Optimization
 
-## Phase 1: Core Logic Refactoring
+## Phase 1: Core Logic Refactoring [checkpoint: 04ddfa3]
 - [~] Task: Update `src/scraper.rs` for bulk operations
     - [ ] Refactor `scrape_recipe` to be used internally by a new bulk function.
     - [ ] Implement `scrape_recipes` (plural) that takes a `Vec<String>` and returns a map of results.
