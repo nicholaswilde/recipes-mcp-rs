@@ -1,10 +1,10 @@
 # Implementation Plan: MCP Token Optimization
 
 ## Phase 1: Core Logic Refactoring
-- [ ] Task: Update `src/scraper.rs` for bulk operations
+- [~] Task: Update `src/scraper.rs` for bulk operations
     - [ ] Refactor `scrape_recipe` to be used internally by a new bulk function.
     - [ ] Implement `scrape_recipes` (plural) that takes a `Vec<String>` and returns a map of results.
-    - [ ] **TDD:** Write unit tests for the bulk scraping logic.
+    - [x] **TDD:** Write unit tests for the bulk scraping logic.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Core Logic Refactoring' (Protocol in workflow.md)
 
 ## Phase 2: MCP Tool Implementation

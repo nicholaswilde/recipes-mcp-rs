@@ -1,11 +1,13 @@
 use rust_recipe::RecipeInformationProvider;
 use serde::Serialize;
+use std::collections::HashMap;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Serialize)]
+#[serde(tag = "error", content = "message")]
 pub enum ScraperError {
-    #[error("invalid URL: {0}")]
     #[allow(dead_code)]
+    #[error("invalid URL: {0}")]
     InvalidUrl(String),
     #[error("failed to scrape recipe: {0}")]
     ScrapeFailed(String),
@@ -44,6 +46,15 @@ pub async fn scrape_recipe(url_str: &str) -> Result<Recipe, ScraperError> {
     Ok(Recipe::from(provider))
 }
 
+#[allow(dead_code)]
+pub async fn scrape_recipes(urls: Vec<String>) -> HashMap<String, Result<Recipe, ScraperError>> {
+    let mut results = HashMap::new();
+    for url in urls {
+        results.insert(url.clone(), scrape_recipe(&url).await);
+    }
+    results
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -52,5 +63,14 @@ mod tests {
     async fn test_invalid_url() {
         let result = scrape_recipe("not-a-url").await;
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_scrape_recipes_bulk() {
+        let urls = vec!["not-a-url".to_string(), "invalid://url".to_string()];
+        let results = scrape_recipes(urls).await;
+        assert_eq!(results.len(), 2);
+        assert!(results.get("not-a-url").unwrap().is_err());
+        assert!(results.get("invalid://url").unwrap().is_err());
     }
 }
