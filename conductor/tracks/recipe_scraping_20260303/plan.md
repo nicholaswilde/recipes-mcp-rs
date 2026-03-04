@@ -1,13 +1,13 @@
 # Implementation Plan: Initialize project and implement core recipe scraping functionality
 
 ## Phase 1: Project Foundations
-- [ ] Task: Initialize Cargo project and folder structure
-    - [ ] Create `Cargo.toml` with initial dependencies
-    - [ ] Set up basic module structure (`src/main.rs`, `src/config.rs`, `src/scraper.rs`)
-- [ ] Task: Implement configuration system
-    - [ ] Write tests for multi-format config loading
-    - [ ] Implement TOML, YAML, and JSON parsing with Serde
-    - [ ] Implement ENV and CLI argument overrides using Clap
+- [x] Task: Initialize Cargo project and folder structure
+    - [x] Create `Cargo.toml` with initial dependencies
+    - [x] Set up basic module structure (`src/main.rs`, `src/config.rs`, `src/scraper.rs`)
+- [x] Task: Implement configuration system
+    - [x] Write tests for multi-format config loading
+    - [x] Implement TOML, YAML, and JSON parsing with Serde
+    - [x] Implement ENV and CLI argument overrides using Clap
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Project Foundations' (Protocol in workflow.md)
 
 ## Phase 2: Core Scraping Logic

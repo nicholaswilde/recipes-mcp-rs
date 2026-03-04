@@ -1,0 +1,22 @@
+[package]
+name = "recipes-mcp-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.60", features = ["derive", "env"] }
+config = { version = "0.15.19", features = ["toml", "yaml", "json"] }
+dotenv = "0.15.0"
+envy = "0.4.2"
+mcp-sdk-rs = "0.3.4"
+recipe-scraper = "0.1.1"
+rust-recipe = "0.2.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+thiserror = "2.0.18"
+tokio = { version = "1.50.0", features = ["full"] }
+tracing = "0.1.44"
+tracing-subscriber = "0.3.22"
+
+[dev-dependencies]
+serial_test = "3.4.0"
