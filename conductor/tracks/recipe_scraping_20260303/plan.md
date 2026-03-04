@@ -20,10 +20,10 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Core Scraping Logic' (Protocol in workflow.md)
 
 ## Phase 3: MCP Integration and Validation
-- [ ] Task: Implement MCP Server interface
-    - [ ] Write tests for MCP tool registration
-    - [ ] Set up basic MCP server loop and register the `scrape_recipe` tool
-- [ ] Task: Final Validation and Testing
-    - [ ] Write integration tests for the full scraping flow
-    - [ ] Ensure >80% code coverage across all new modules
+- [x] Task: Implement MCP Server interface
+    - [x] Write tests for MCP tool registration
+    - [x] Set up basic MCP server loop and register the `scrape_recipe` tool
+- [x] Task: Final Validation and Testing
+    - [x] Write integration tests for the full scraping flow
+    - [x] Ensure >80% code coverage across all new modules
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: MCP Integration and Validation' (Protocol in workflow.md)

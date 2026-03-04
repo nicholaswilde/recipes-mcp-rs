@@ -3,16 +3,15 @@ use serde::Serialize;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-#[allow(dead_code)]
 pub enum ScraperError {
     #[error("invalid URL: {0}")]
+    #[allow(dead_code)]
     InvalidUrl(String),
     #[error("failed to scrape recipe: {0}")]
     ScrapeFailed(String),
 }
 
 #[derive(Debug, Serialize, Default)]
-#[allow(dead_code)]
 pub struct Recipe {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -37,9 +36,7 @@ impl From<Box<dyn RecipeInformationProvider>> for Recipe {
     }
 }
 
-#[allow(dead_code)]
 pub async fn scrape_recipe(url_str: &str) -> Result<Recipe, ScraperError> {
-    // We'll use rust_recipe's async scrape function
     let provider = rust_recipe::scrape_recipe_from_url(url_str)
         .await
         .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
