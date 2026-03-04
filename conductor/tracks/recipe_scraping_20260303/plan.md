@@ -10,7 +10,7 @@
     - [x] Implement ENV and CLI argument overrides using Clap
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Project Foundations' (Protocol in workflow.md)
 
-## Phase 2: Core Scraping Logic
+## Phase 2: Core Scraping Logic [checkpoint: a2d1da2]
 - [~] Task: Integrate scraping libraries
     - [ ] Write tests for basic URL scraping
     - [ ] Implement recipe extraction using `recipe-scraper` and `rust-recipe`
