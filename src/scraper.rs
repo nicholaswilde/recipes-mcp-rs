@@ -80,18 +80,30 @@ pub async fn scrape_recipe(url_str: &str) -> Result<Recipe, ScraperError> {
     match provider_result {
         Ok(provider) => {
             let recipe = Recipe::from(provider);
-            // If we got valid data, return it
+            // If we got valid data (ingredients and instructions), return it
             if !recipe.ingredients.is_empty() && !recipe.instructions.is_empty() {
+                tracing::info!("Primary scraper (rust-recipe) succeeded for {}", url_str);
                 return Ok(recipe);
             }
+            tracing::warn!(
+                "Primary scraper returned incomplete data for {}. Attempting fallback.",
+                url_str
+            );
         }
         Err(e) => {
-            tracing::warn!("Primary scraper failed for {}: {}", url_str, e);
+            tracing::warn!(
+                "Primary scraper failed for {}: {}. Attempting fallback.",
+                url_str,
+                e
+            );
         }
     }
 
     // Fallback to secondary scraper (recipe-scraper)
-    tracing::info!("Attempting fallback scraper for {}", url_str);
+    tracing::info!(
+        "Attempting fallback scraper (recipe-scraper) for {}",
+        url_str
+    );
     let response = reqwest::get(url_str)
         .await
         .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
@@ -100,17 +112,24 @@ pub async fn scrape_recipe(url_str: &str) -> Result<Recipe, ScraperError> {
         .await
         .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
 
+    // Correct usage of Scrape and Extract traits
     let schema_entries = SchemaOrgEntry::scrape_html(&html);
-    if let Some(recipe) = schema_entries
+    let recipes: Vec<Recipe> = schema_entries
         .into_iter()
-        .flat_map(|e: SchemaOrgEntry| e.extract_recipes())
-        .next()
-    {
-        return Ok(Recipe::from(recipe));
+        .flat_map(|e| e.extract_recipes())
+        .map(Recipe::from)
+        .collect();
+
+    // Return the first valid recipe (one with ingredients and instructions)
+    for recipe in recipes {
+        if !recipe.ingredients.is_empty() && !recipe.instructions.is_empty() {
+            tracing::info!("Fallback scraper succeeded for {}", url_str);
+            return Ok(recipe);
+        }
     }
 
     Err(ScraperError::ScrapeFailed(
-        "Both scrapers failed to extract recipe data".into(),
+        "Both scrapers failed to extract valid recipe data".into(),
     ))
 }
 

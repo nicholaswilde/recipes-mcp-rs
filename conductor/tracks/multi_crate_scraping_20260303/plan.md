@@ -11,7 +11,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Logic and Conversion Refactoring' (Protocol in workflow.md)
 
 ## Phase 2: Integration and Validation
-- [ ] Task: Final System Verification
-    - [ ] Run `task test:ci` to ensure all tests pass.
-    - [ ] Manually verify scraping with a known "hard" recipe URL.
+- [x] Task: Final System Verification
+    - [x] Run `task test:ci` to ensure all tests pass.
+    - [x] Manually verify scraping with a known "hard" recipe URL.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Integration and Validation' (Protocol in workflow.md)
