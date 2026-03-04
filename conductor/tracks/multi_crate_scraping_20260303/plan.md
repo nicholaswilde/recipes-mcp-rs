@@ -1,6 +1,6 @@
 # Implementation Plan: Enhanced Multi-Crate Scraping
 
-## Phase 1: Logic and Conversion Refactoring
+## Phase 1: Logic and Conversion Refactoring [checkpoint: f345767]
 - [~] Task: Implement conversion for `recipe-scraper` models
     - [x] Create conversion logic from `recipe_scraper::SchemaOrgRecipe` to our internal `Recipe` struct.
     - [x] **TDD:** Write unit tests for the conversion.
