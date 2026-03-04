@@ -19,7 +19,7 @@
     - [ ] Implement granular parsing for structured recipe output
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Core Scraping Logic' (Protocol in workflow.md)
 
-## Phase 3: MCP Integration and Validation
+## Phase 3: MCP Integration and Validation [checkpoint: e1b0f57]
 - [x] Task: Implement MCP Server interface
     - [x] Write tests for MCP tool registration
     - [x] Set up basic MCP server loop and register the `scrape_recipe` tool
