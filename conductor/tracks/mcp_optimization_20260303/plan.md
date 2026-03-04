@@ -7,7 +7,7 @@
     - [x] **TDD:** Write unit tests for the bulk scraping logic.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Core Logic Refactoring' (Protocol in workflow.md)
 
-## Phase 2: MCP Tool Implementation
+## Phase 2: MCP Tool Implementation [checkpoint: 679b3be]
 - [ ] Task: Update `src/main.rs` to use the unified tool
     - [ ] Implement the `manage_recipes` tool definition and handler.
     - [ ] Implement the `action`-based dispatch logic.
