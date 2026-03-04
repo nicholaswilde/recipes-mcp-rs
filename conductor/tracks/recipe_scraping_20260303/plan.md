@@ -11,7 +11,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Project Foundations' (Protocol in workflow.md)
 
 ## Phase 2: Core Scraping Logic
-- [ ] Task: Integrate scraping libraries
+- [~] Task: Integrate scraping libraries
     - [ ] Write tests for basic URL scraping
     - [ ] Implement recipe extraction using `recipe-scraper` and `rust-recipe`
 - [ ] Task: Refine data extraction
