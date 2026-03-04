@@ -2,16 +2,23 @@ mod config;
 mod scraper;
 
 use crate::config::{AppConfig, Args};
-use crate::scraper::scrape_recipe;
+use crate::scraper::scrape_recipes;
 use clap::Parser;
 use mcp_sdk_rs::{
     protocol::{JSONRPC_VERSION, Request, Response, ResponseError},
     types::{Tool, ToolSchema},
 };
+use serde::Deserialize;
 use serde_json::json;
 use std::io::{BufRead, Write};
 use tracing::{Level, error, info};
 use tracing_subscriber::FmtSubscriber;
+
+#[derive(Debug, Deserialize)]
+struct ManageRecipesArgs {
+    action: String,
+    urls: Vec<String>,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -92,16 +99,22 @@ async fn handle_request(req: Request) -> Response {
         },
         "tools/list" => {
             let tool = Tool {
-                name: "scrape_recipe".into(),
-                description: "Scrape and parse a recipe from a given URL".into(),
+                name: "manage_recipes".into(),
+                description: "Manage recipes including bulk scraping and parsing".into(),
                 input_schema: Some(ToolSchema {
                     properties: Some(json!({
-                        "url": {
+                        "action": {
                             "type": "string",
-                            "description": "The URL of the recipe to scrape"
+                            "enum": ["scrape"],
+                            "description": "The action to perform"
+                        },
+                        "urls": {
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "description": "List of recipe URLs to scrape"
                         }
                     })),
-                    required: Some(vec!["url".into()]),
+                    required: Some(vec!["action".into(), "urls".into()]),
                 }),
                 annotations: None,
             };
@@ -115,35 +128,50 @@ async fn handle_request(req: Request) -> Response {
         "tools/call" => {
             if let Some(params) = req.params {
                 let name = params["name"].as_str().unwrap_or_default();
-                if name == "scrape_recipe" {
-                    let url = params["arguments"]["url"].as_str().unwrap_or_default();
-                    match scrape_recipe(url).await {
-                        Ok(recipe) => Response {
+                if name == "manage_recipes" {
+                    let args_val = params["arguments"].clone();
+                    let args: ManageRecipesArgs = match serde_json::from_value(args_val) {
+                        Ok(a) => a,
+                        Err(e) => {
+                            return Response {
+                                jsonrpc: JSONRPC_VERSION.into(),
+                                id,
+                                result: None,
+                                error: Some(ResponseError {
+                                    code: -32602,
+                                    message: format!("Invalid arguments: {}", e),
+                                    data: None,
+                                }),
+                            };
+                        }
+                    };
+
+                    match args.action.as_str() {
+                        "scrape" => {
+                            let results = scrape_recipes(args.urls).await;
+                            Response {
+                                jsonrpc: JSONRPC_VERSION.into(),
+                                id,
+                                result: Some(json!({
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": serde_json::to_string_pretty(&results).unwrap()
+                                        }
+                                    ]
+                                })),
+                                error: None,
+                            }
+                        }
+                        _ => Response {
                             jsonrpc: JSONRPC_VERSION.into(),
                             id,
-                            result: Some(json!({
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": serde_json::to_string_pretty(&recipe).unwrap()
-                                    }
-                                ]
-                            })),
-                            error: None,
-                        },
-                        Err(e) => Response {
-                            jsonrpc: JSONRPC_VERSION.into(),
-                            id,
-                            result: Some(json!({
-                                "isError": true,
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": format!("Failed to scrape recipe: {}", e)
-                                    }
-                                ]
-                            })),
-                            error: None,
+                            result: None,
+                            error: Some(ResponseError {
+                                code: -32601,
+                                message: format!("Unknown action: {}", args.action),
+                                data: None,
+                            }),
                         },
                     }
                 } else {

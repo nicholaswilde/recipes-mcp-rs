@@ -12,7 +12,7 @@
     - [ ] Implement the `manage_recipes` tool definition and handler.
     - [ ] Implement the `action`-based dispatch logic.
     - [ ] Remove the old `scrape_recipe` tool registration.
-    - [ ] **TDD:** Write integration tests (manual or automated) for the new tool schema.
+    - [x] **TDD:** Write integration tests (manual or automated) for the new tool schema.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: MCP Tool Implementation' (Protocol in workflow.md)
 
 ## Phase 3: Quality and Cleanup
