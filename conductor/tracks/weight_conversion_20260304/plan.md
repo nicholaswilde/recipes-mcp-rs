@@ -11,19 +11,16 @@
 - [x] Task: Implement Conversion Logic (Tier 1)
     - [x] Create `src/conversion/engine.rs` to apply ratios to parsed volumes.
     - [x] **TDD:** Write unit tests for local look-up conversion.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Local Conversion Core' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Local Conversion Core' (Protocol in workflow.md)
 
-## Phase 2: Online Fallbacks [checkpoint: ]
-- [ ] Task: Implement King Arthur Web Look-up (Tier 2)
-    - [ ] Implement scraper for `https://www.kingarthurbaking.com/learn/ingredient-weight-chart`.
-    - [ ] **TDD:** Mock web responses and test extraction.
-- [ ] Task: Implement Google Search Fallback (Tier 3)
-    - [ ] Integrate a search mechanism to find weights for missing ingredients.
-    - [ ] **TDD:** Verify search query generation and result parsing.
-- [ ] Task: Implement "Best Guess" and Result Parsing
-    - [ ] Logic to select the most likely match from search results.
-    - [ ] **TDD:** Test ambiguity resolution (e.g., "flour" defaults to AP).
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Online Fallbacks' (Protocol in workflow.md)
+## Phase 2: Online Fallbacks [checkpoint: 3167416]
+- [x] Task: Implement King Arthur Web Look-up (Tier 2)
+    - [x] Implement scraper for `https://www.kingarthurbaking.com/learn/ingredient-weight-chart`.
+    - [x] **TDD:** Mock web responses and test extraction.
+- [x] Task: Implement "Best Guess" and Result Parsing
+    - [x] Logic to select the most likely match from King Arthur chart.
+    - [x] **TDD:** Test ambiguity resolution (e.g., "flour" defaults to AP).
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Online Fallbacks' (Protocol in workflow.md)
 
 ## Phase 3: Integration and Normalization [checkpoint: ]
 - [ ] Task: Integrate Conversion into `scrape_recipe` flow
