@@ -11,7 +11,7 @@
     - [x] Add a `scale` method to the `Recipe` struct.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Scaling Logic and Tool Update' (Protocol in workflow.md)
 
-## Phase 2: Validation [checkpoint: ]
+## Phase 2: Validation [checkpoint: eb8ad0f]
 - [x] Task: System Integration and Quality Check
     - [x] Verify scaling with real-world recipes.
     - [x] Run `task test:ci` to ensure everything is correct.
