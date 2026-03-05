@@ -7,7 +7,6 @@ This file tracks all major tracks for the project. Each track has its own detail
   *Link: [./tracks/dietary_metadata_20260304/](./tracks/dietary_metadata_20260304/)*
 
 ## Completed Tracks
-- [x] **Track: Recipe Search Support**
-  *Link: [./tracks/recipe_search_20260304/](./tracks/recipe_search_20260304/)*
+
 
 
