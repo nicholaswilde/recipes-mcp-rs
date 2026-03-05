@@ -9,8 +9,8 @@
     - [x] Update the `ManageRecipesArgs` struct and the tool's JSON schema.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Search Logic and Tool Update' (Protocol in workflow.md)
 
-## Phase 2: Validation
-- [ ] Task: System Integration and Quality Check
-    - [ ] Verify search results with various queries.
-    - [ ] Run `task test:ci` to ensure everything is correct.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Validation' (Protocol in workflow.md)
+## Phase 2: Validation [checkpoint: ]
+- [x] Task: System Integration and Quality Check
+    - [x] Verify search results with various queries.
+    - [x] Run `task test:ci` to ensure everything is correct.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Validation' (Protocol in workflow.md)
