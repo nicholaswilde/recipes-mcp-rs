@@ -1,0 +1,7 @@
+{
+  "id": "recipe_scaling_20260304",
+  "title": "Recipe Scaling Support",
+  "description": "Implement a 'scale' action for the manage_recipes tool to adjust servings.",
+  "status": "planned",
+  "created_at": "2026-03-04T21:40:00Z"
+}
