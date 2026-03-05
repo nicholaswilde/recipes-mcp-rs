@@ -1,18 +1,13 @@
-mod config;
-mod conversion;
-mod formatter;
-mod scaling;
-mod scraper;
-mod search;
-
-use crate::config::{AppConfig, Args};
-use crate::conversion::data::WeightChart;
-use crate::scraper::{Recipe, scrape_recipes};
 use clap::Parser;
 use mcp_sdk_rs::{
     protocol::{JSONRPC_VERSION, Request, Response, ResponseError},
     types::{Tool, ToolSchema},
 };
+use recipes_mcp_rs::config::{AppConfig, Args};
+use recipes_mcp_rs::conversion::data::WeightChart;
+use recipes_mcp_rs::formatter;
+use recipes_mcp_rs::scraper::{Recipe, scrape_recipes};
+use recipes_mcp_rs::search;
 use serde::Deserialize;
 use serde_json::json;
 use std::io::{BufRead, Write};
@@ -284,7 +279,7 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
                             let formatted_output = match format_type.as_str() {
                                 "markdown" => recipes_to_format
                                     .iter()
-                                    .map(crate::formatter::to_markdown)
+                                    .map(formatter::to_markdown)
                                     .collect::<Vec<String>>()
                                     .join("\n\n---\n\n"),
                                 "json" => serde_json::to_string_pretty(&recipes_to_format).unwrap(),
@@ -309,12 +304,12 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
                                 jsonrpc: JSONRPC_VERSION.into(),
                                 id,
                                 result: Some(json!({
-                                    "content": [
-                                        {
-                                            "type": "text",
-                                            "text": formatted_output
-                                        }
-                                    ]
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": formatted_output
+                                    }
+                                ]
                                 })),
                                 error: None,
                             }
@@ -337,7 +332,7 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
                                 }
                             };
                             let limit = args.limit.unwrap_or(5);
-                            let results = crate::search::search_recipes(&query, limit).await;
+                            let results = search::search_recipes(&query, limit).await;
                             match results {
                                 Ok(res) => Response {
                                     jsonrpc: JSONRPC_VERSION.into(),

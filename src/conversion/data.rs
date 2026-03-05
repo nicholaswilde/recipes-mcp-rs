@@ -16,6 +16,12 @@ pub struct WeightChart {
     aliases: HashMap<String, String>,
 }
 
+impl Default for WeightChart {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WeightChart {
     #[allow(dead_code)]
     pub fn new() -> Self {
