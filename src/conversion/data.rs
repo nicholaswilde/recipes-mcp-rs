@@ -13,12 +13,14 @@ pub struct IngredientWeight {
 #[allow(dead_code)]
 pub struct WeightChart {
     data: HashMap<String, IngredientWeight>,
+    aliases: HashMap<String, String>,
 }
 
 impl WeightChart {
     #[allow(dead_code)]
     pub fn new() -> Self {
         let mut data = HashMap::new();
+        let mut aliases = HashMap::new();
 
         // Hardcoded standard entries (King Arthur)
         let standard_entries = vec![
@@ -52,6 +54,11 @@ impl WeightChart {
             data.insert(entry.name.to_lowercase(), entry);
         }
 
+        // Standard aliases
+        aliases.insert("flour".into(), "all-purpose flour".into());
+        aliases.insert("sugar".into(), "granulated sugar".into());
+        aliases.insert("wheat flour".into(), "whole wheat flour".into());
+
         // Try to load external config
         if let Ok(external_data) = Self::load_from_file("config/weights.json") {
             for entry in external_data {
@@ -59,7 +66,7 @@ impl WeightChart {
             }
         }
 
-        Self { data }
+        Self { data, aliases }
     }
 
     fn load_from_file<P: AsRef<Path>>(
@@ -70,8 +77,47 @@ impl WeightChart {
         Ok(data)
     }
 
+    #[allow(dead_code)]
     pub fn get(&self, name: &str) -> Option<&IngredientWeight> {
         self.data.get(&name.to_lowercase())
+    }
+
+    #[allow(dead_code)]
+    pub fn find_best_match(&self, name: &str) -> Option<&IngredientWeight> {
+        let name_lower = name.to_lowercase();
+
+        // 1. Try exact match
+        if let Some(entry) = self.data.get(&name_lower) {
+            return Some(entry);
+        }
+
+        // 2. Try alias match
+        if let Some(entry) = self
+            .aliases
+            .get(&name_lower)
+            .and_then(|target| self.data.get(target))
+        {
+            return Some(entry);
+        }
+
+        // 3. Try partial match (if the chart name contains the input, or vice versa)
+        for (chart_name, entry) in &self.data {
+            if chart_name.contains(&name_lower) || name_lower.contains(chart_name) {
+                return Some(entry);
+            }
+        }
+
+        // 4. Try alias as substring
+        if let Some(entry) = self
+            .aliases
+            .iter()
+            .filter(|(alias, _)| name_lower.contains(*alias))
+            .find_map(|(_, target)| self.data.get(target))
+        {
+            return Some(entry);
+        }
+
+        None
     }
 }
 
@@ -97,5 +143,26 @@ mod tests {
     fn test_get_missing_ingredient() {
         let chart = WeightChart::new();
         assert!(chart.get("Unicorn Dust").is_none());
+    }
+
+    #[test]
+    fn test_find_best_match_exact() {
+        let chart = WeightChart::new();
+        let flour = chart.find_best_match("All-Purpose Flour").unwrap();
+        assert_eq!(flour.grams_per_cup, 120.0);
+    }
+
+    #[test]
+    fn test_find_best_match_alias() {
+        let chart = WeightChart::new();
+        let flour = chart.find_best_match("flour").unwrap();
+        assert_eq!(flour.name, "All-Purpose Flour");
+    }
+
+    #[test]
+    fn test_find_best_match_substring() {
+        let chart = WeightChart::new();
+        let flour = chart.find_best_match("white flour").unwrap();
+        assert_eq!(flour.name, "All-Purpose Flour");
     }
 }

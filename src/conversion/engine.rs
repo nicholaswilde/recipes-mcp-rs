@@ -4,7 +4,7 @@ use crate::conversion::parser::parse_ingredient;
 #[allow(dead_code)]
 pub fn convert_to_weight(ingredient_str: &str, chart: &WeightChart) -> Option<f64> {
     let vol = parse_ingredient(ingredient_str)?;
-    let weight_info = chart.get(&vol.ingredient)?;
+    let weight_info = chart.find_best_match(&vol.ingredient)?;
 
     let cups = match vol.unit.to_lowercase().as_str() {
         "cup" | "cups" => vol.value,
@@ -41,6 +41,14 @@ mod tests {
         // 1 tbsp butter = 227 / 16 = 14.1875
         let weight = convert_to_weight("1 tbsp Butter", &chart).unwrap();
         assert_eq!(weight, 14.1875);
+    }
+
+    #[test]
+    fn test_convert_best_match() {
+        let chart = WeightChart::new();
+        // "flour" should match "All-Purpose Flour" (120g)
+        let weight = convert_to_weight("1 cup flour", &chart).unwrap();
+        assert_eq!(weight, 120.0);
     }
 
     #[test]
