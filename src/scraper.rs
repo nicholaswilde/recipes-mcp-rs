@@ -159,13 +159,8 @@ impl Recipe {
     }
 
     pub fn convert_ingredients(&mut self, chart: &crate::conversion::data::WeightChart) {
-        let weight_re = regex::Regex::new(r"\s+\(\d+g\)$").unwrap();
         for ingredient in self.ingredients.iter_mut() {
-            // Remove existing weight suffix if present
-            let cleaned = weight_re.replace(ingredient, "");
-            if let Some(weight) = crate::conversion::engine::convert_to_weight(&cleaned, chart) {
-                *ingredient = format!("{} ({:.0}g)", cleaned, weight);
-            }
+            *ingredient = crate::conversion::engine::format_with_weight(ingredient, chart);
         }
     }
 }
@@ -173,20 +168,30 @@ impl Recipe {
 pub async fn scrape_recipe(
     url_str: &str,
     chart: &crate::conversion::data::WeightChart,
+    weight_conversion: bool,
 ) -> Result<Recipe, ScraperError> {
     // Basic validation
     Url::parse(url_str).map_err(|e| ScraperError::InvalidUrl(e.to_string()))?;
 
-    // Attempt primary scraper (rust-recipe)
-    let provider_result = rust_recipe::scrape_recipe_from_url(url_str).await;
+    // Attempt primary scraper (rust-recipe) in a separate task to catch panics
+    let url_for_task = url_str.to_string();
+    let provider_task = tokio::spawn(async move {
+        rust_recipe::scrape_recipe_from_url(&url_for_task)
+            .await
+            .map(Recipe::from)
+            .map_err(|e| e.to_string())
+    });
+
+    let provider_result = provider_task.await;
 
     let recipe = match provider_result {
-        Ok(provider) => {
-            let mut recipe = Recipe::from(provider);
+        Ok(Ok(mut recipe)) => {
             // If we got valid data (ingredients and instructions), return it
             if !recipe.ingredients.is_empty() && !recipe.instructions.is_empty() {
                 tracing::info!("Primary scraper (rust-recipe) succeeded for {}", url_str);
-                recipe.convert_ingredients(chart);
+                if weight_conversion {
+                    recipe.convert_ingredients(chart);
+                }
                 return Ok(recipe);
             }
             tracing::warn!(
@@ -195,12 +200,20 @@ pub async fn scrape_recipe(
             );
             Some(recipe)
         }
-        Err(e) => {
+        Ok(Err(e)) => {
             tracing::warn!(
                 "Primary scraper failed for {}: {}. Attempting fallback.",
                 url_str,
                 e
             );
+            None
+        }
+        Err(e) => {
+            if e.is_panic() {
+                tracing::error!("Primary scraper panicked for {}. Attempting fallback.", url_str);
+            } else {
+                tracing::error!("Primary scraper task failed for {}: {}. Attempting fallback.", url_str, e);
+            }
             None
         }
     };
@@ -225,7 +238,9 @@ pub async fn scrape_recipe(
         .flat_map(|e| e.extract_recipes())
         .map(|r| {
             let mut recipe = Recipe::from(r);
-            recipe.convert_ingredients(chart);
+            if weight_conversion {
+                recipe.convert_ingredients(chart);
+            }
             recipe
         })
         .collect();
@@ -254,10 +269,11 @@ pub async fn scrape_recipe(
 pub async fn scrape_recipes(
     urls: Vec<String>,
     chart: &crate::conversion::data::WeightChart,
+    weight_conversion: bool,
 ) -> HashMap<String, Result<Recipe, ScraperError>> {
     let mut results = HashMap::new();
     for url in urls {
-        results.insert(url.clone(), scrape_recipe(&url, chart).await);
+        results.insert(url.clone(), scrape_recipe(&url, chart, weight_conversion).await);
     }
     results
 }
@@ -277,7 +293,7 @@ mod tests {
     #[tokio::test]
     async fn test_invalid_url() {
         let chart = crate::conversion::data::WeightChart::new();
-        let result = scrape_recipe("not-a-url", &chart).await;
+        let result = scrape_recipe("not-a-url", &chart, true).await;
         assert!(matches!(result, Err(ScraperError::InvalidUrl(_))));
     }
 
@@ -285,7 +301,7 @@ mod tests {
     async fn test_scrape_recipes_bulk() {
         let chart = crate::conversion::data::WeightChart::new();
         let urls = vec!["not-a-url".to_string(), "invalid://url".to_string()];
-        let results = scrape_recipes(urls, &chart).await;
+        let results = scrape_recipes(urls, &chart, true).await;
         assert_eq!(results.len(), 2);
         assert!(results.get("not-a-url").unwrap().is_err());
         assert!(results.get("invalid://url").unwrap().is_err());
@@ -365,31 +381,25 @@ mod tests {
         };
         let chart = crate::conversion::data::WeightChart::new();
         recipe.convert_ingredients(&chart);
-        assert_eq!(recipe.ingredients[0], "1 cup All-Purpose Flour (120g)");
+        assert_eq!(recipe.ingredients[0], "1 cup (120g) All-Purpose Flour");
 
         // Running again should not change anything or add another weight
         recipe.convert_ingredients(&chart);
-        assert_eq!(recipe.ingredients[0], "1 cup All-Purpose Flour (120g)");
+        assert_eq!(recipe.ingredients[0], "1 cup (120g) All-Purpose Flour");
     }
 
     #[test]
-    fn test_scale_and_convert_ingredients() {
+    fn test_convert_ingredients_with_existing_weight() {
         let mut recipe = Recipe {
-            ingredients: vec!["1 cup All-Purpose Flour".into()],
-            servings: Some(1),
+            ingredients: vec![
+                "2 cups (400g) packed brown sugar".into(),
+                "6 tablespoons (84g) unsalted butter".into(),
+            ],
             ..Recipe::default()
         };
         let chart = crate::conversion::data::WeightChart::new();
-
-        // Initial conversion
         recipe.convert_ingredients(&chart);
-        assert_eq!(recipe.ingredients[0], "1 cup All-Purpose Flour (120g)");
-
-        // Scale by 2
-        recipe.scale(2);
-        // Note: scale doesn't automatically call convert_ingredients,
-        // we do it in main.rs but let's test it here.
-        recipe.convert_ingredients(&chart);
-        assert_eq!(recipe.ingredients[0], "2 cup All-Purpose Flour (240g)");
+        assert_eq!(recipe.ingredients[0], "2 cups (426g) packed brown sugar");
+        assert_eq!(recipe.ingredients[1], "6 tablespoons (85g) unsalted butter");
     }
 }

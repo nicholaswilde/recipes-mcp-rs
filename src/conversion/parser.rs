@@ -64,10 +64,14 @@ pub fn parse_ingredient(s: &str) -> Option<VolumetricAmount> {
         return None;
     }
 
+    // Clean the ingredient name by removing existing weight parentheticals like (123g)
+    let weight_re = Regex::new(r"\s*\(\d+g\)\s*").unwrap();
+    let cleaned_ingredient = weight_re.replace_all(rest.trim(), " ").trim().to_string();
+
     Some(VolumetricAmount {
         value,
         unit,
-        ingredient: rest.trim().to_string(),
+        ingredient: cleaned_ingredient,
     })
 }
 
@@ -97,10 +101,10 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_mixed_cup() {
-        let res = parse_ingredient("1 1/2 cups milk").unwrap();
-        assert_eq!(res.value, 1.5);
+    fn test_parse_with_existing_weight() {
+        let res = parse_ingredient("2 cups (400g) packed brown sugar").unwrap();
+        assert_eq!(res.value, 2.0);
         assert_eq!(res.unit, "cups");
-        assert_eq!(res.ingredient, "milk");
+        assert_eq!(res.ingredient, "packed brown sugar");
     }
 }

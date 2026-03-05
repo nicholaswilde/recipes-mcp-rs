@@ -10,11 +10,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 - Description: Implement HTTP and SSE transport modes for the MCP server using Axum.
 
 ---
-## [ ] Track: Standalone Ingredient Conversion Tool
-- Link: [ingredient_conversion_20260304](./tracks/ingredient_conversion_20260304/index.md)
-- Description: Expose unit conversion logic as a standalone MCP tool for quick ingredient calculations.
-
----
 ## [ ] Track: Multi-Provider Recipe Search
 - Link: [multi_provider_search_20260304](./tracks/multi_provider_search_20260304/index.md)
 - Description: Expand recipe search to support multiple providers (Food Network, Serious Eats, etc.) with provider selection.

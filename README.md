@@ -6,7 +6,8 @@ An MCP server written in Rust for importing, parsing, scaling, formatting, and s
 
 - **Intelligent Web Scraping:** Extracts recipes from a wide variety of online sources using a tiered strategy with `rust-recipe` and `recipe-scraper`.
 - **Recipe Scaling:** Adjust servings for any recipe, automatically scaling ingredient quantities.
-- **Weight Conversion:** Automatically converts volumetric measurements (cups, tbsp, tsp) to gram weights using the King Arthur ingredient weight chart.
+- **Weight Conversion:** Automatically converts volumetric measurements (cups, tbsp, tsp) to gram weights using the [King Arthur Baking ingredient weight chart](https://www.kingarthurbaking.com/learn/ingredient-weight-chart).
+- **Standalone Conversion Tool:** Quickly convert a list of ingredient strings into weighted equivalents.
 - **Multi-Format Export:** Supports exporting recipes to Markdown and JSON.
 - **Recipe Discovery:** Integrated search functionality to find recipe URLs from supported providers (e.g., AllRecipes).
 - **Flexible Configuration:** Supports TOML, YAML, and JSON configuration files, as well as environment variables and command-line arguments.
@@ -38,14 +39,17 @@ The server can be configured via environment variables, command-line arguments, 
 
 | Option | Environment Variable | CLI Argument | Default |
 |--------|----------------------|--------------|---------|
-| Log Level | `RECIPES_LOG_LEVEL` | `--log-level` | `info` |
-| MCP Transport | `RECIPES_MCP_TRANSPORT` | `--mcp-transport` | `stdio` |
+| Log Level | `RECIPES__LOG_LEVEL` | `--log-level` | `info` |
+| MCP Transport | `RECIPES__MCP_TRANSPORT` | `--mcp-transport` | `stdio` |
+| Weight Conversion | `RECIPES__WEIGHT_CONVERSION` | `--weight-conversion` | `true` |
 
 ### :wrench: MCP Tools
 
-The server provides a single tool `manage_recipes` with multiple actions:
+The server provides several tools for recipe management and ingredient processing:
 
 #### `manage_recipes`
+
+Unified tool for complex recipe operations.
 
 **Arguments:**
 - `action` (required): `scrape`, `scale`, `format`, or `search`.
@@ -56,6 +60,13 @@ The server provides a single tool `manage_recipes` with multiple actions:
 - `query`: Search query (required for `search`).
 - `limit`: Maximum search results (optional for `search`, default 5).
 
+#### `convert_ingredients`
+
+Quickly convert a list of volumetric ingredient strings to gram weights.
+
+**Arguments:**
+- `ingredients` (required): Array of ingredient strings (e.g., `["1 cup flour", "2 tbsp sugar"]`).
+
 ### :memo: Example MCP Config
 
 ```json
@@ -63,9 +74,9 @@ The server provides a single tool `manage_recipes` with multiple actions:
   "mcpServers": {
     "recipes": {
       "command": "/path/to/recipes-mcp-rs",
-      "args": [],
+      "args": ["--weight-conversion", "true"],
       "env": {
-        "RECIPES_LOG_LEVEL": "info"
+        "RECIPES__LOG_LEVEL": "info"
       }
     }
   }

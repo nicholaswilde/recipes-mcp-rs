@@ -1,0 +1,6 @@
+{
+  "id": "togglable_weight_conversion_20260305",
+  "title": "Togglable Weight Conversion",
+  "description": "Allow enabling/disabling automatic weight conversion via CLI, config, or environment variables.",
+  "status": "completed"
+}

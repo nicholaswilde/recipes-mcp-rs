@@ -1,7 +1,6 @@
 use clap::Parser;
 use mcp_sdk_rs::{
     protocol::{JSONRPC_VERSION, Request, Response, ResponseError},
-    types::{Tool, ToolSchema},
 };
 use recipes_mcp_rs::config::{AppConfig, Args};
 use recipes_mcp_rs::conversion::data::WeightChart;
@@ -52,6 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Recipes MCP Server starting...");
 
     let weight_chart = Arc::new(WeightChart::new());
+    let weight_conversion_enabled = config.weight_conversion;
 
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
@@ -68,7 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         match serde_json::from_str::<Request>(&line) {
             Ok(req) => {
-                let response = handle_request(req, weight_chart.clone()).await;
+                let response = handle_request(req, weight_chart.clone(), weight_conversion_enabled).await;
                 let response_json = serde_json::to_string(&response).unwrap();
                 if let Err(e) = writeln!(stdout, "{}", response_json) {
                     error!("Failed to write to stdout: {}", e);
@@ -85,7 +85,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Response {
+async fn handle_request(req: Request, weight_chart: Arc<WeightChart>, weight_conversion_enabled: bool) -> Response {
     let id = req.id.clone();
     match req.method.as_str() {
         "initialize" => Response {
@@ -106,54 +106,70 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
             error: None,
         },
         "tools/list" => {
-            let tool = Tool {
-                name: "manage_recipes".into(),
-                description:
-                    "Manage recipes including bulk scraping, parsing, scaling, formatting, and search"
-                        .into(),
-                input_schema: Some(ToolSchema {
-                    properties: Some(json!({
-                        "action": {
-                            "type": "string",
-                            "enum": ["scrape", "scale", "format", "search"],
-                            "description": "The action to perform"
-                        },
-                        "urls": {
-                            "type": "array",
-                            "items": { "type": "string" },
-                            "description": "List of recipe URLs to scrape (required for 'scrape' and 'format' action, optional for 'scale' if 'recipes' provided)"
-                        },
-                        "recipes": {
-                            "type": "array",
-                            "items": { "type": "object" },
-                            "description": "List of recipe objects to scale or format (required for 'scale'/'format' action if 'urls' not provided)"
-                        },
-                        "target_servings": {
-                            "type": "integer",
-                            "description": "The desired number of servings (required for 'scale' action)"
-                        },
-                        "format_type": {
-                            "type": "string",
-                            "enum": ["markdown", "json"],
-                            "description": "The desired output format (required for 'format' action, defaults to 'markdown')"
-                        },
-                        "query": {
-                            "type": "string",
-                            "description": "The search query to find recipes (required for 'search' action)"
-                        },
-                        "limit": {
-                            "type": "integer",
-                            "description": "Maximum number of search results to return (optional for 'search' action, default 5)"
-                        }
-                    })),
-                    required: Some(vec!["action".into()]),
-                }),
-                annotations: None,
-            };
             Response {
                 jsonrpc: JSONRPC_VERSION.into(),
                 id,
-                result: Some(json!({ "tools": vec![tool] })),
+                result: Some(json!({
+                    "tools": [
+                        {
+                            "name": "manage_recipes",
+                            "description": "Manage recipes including bulk scraping, parsing, scaling, formatting, and search",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "action": {
+                                        "type": "string",
+                                        "enum": ["scrape", "scale", "format", "search"],
+                                        "description": "The action to perform"
+                                    },
+                                    "urls": {
+                                        "type": "array",
+                                        "items": { "type": "string" },
+                                        "description": "List of recipe URLs to scrape (required for 'scrape' and 'format' action, optional for 'scale' if 'recipes' provided)"
+                                    },
+                                    "recipes": {
+                                        "type": "array",
+                                        "items": { "type": "object" },
+                                        "description": "List of recipe objects to scale or format (required for 'scale'/'format' action if 'urls' not provided)"
+                                    },
+                                    "target_servings": {
+                                        "type": "integer",
+                                        "description": "The desired number of servings (required for 'scale' action)"
+                                    },
+                                    "format_type": {
+                                        "type": "string",
+                                        "enum": ["markdown", "json"],
+                                        "description": "The desired output format (required for 'format' action, defaults to 'markdown')"
+                                    },
+                                    "query": {
+                                        "type": "string",
+                                        "description": "The search query to find recipes (required for 'search' action)"
+                                    },
+                                    "limit": {
+                                        "type": "integer",
+                                        "description": "Maximum number of search results to return (optional for 'search' action, default 5)"
+                                    }
+                                },
+                                "required": ["action"]
+                            }
+                        },
+                        {
+                            "name": "convert_ingredients",
+                            "description": "Convert volumetric ingredient measurements to weight (grams)",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "ingredients": {
+                                        "type": "array",
+                                        "items": { "type": "string" },
+                                        "description": "List of ingredient strings to convert (e.g., ['1 cup flour', '2 tbsp sugar'])"
+                                    }
+                                },
+                                "required": ["ingredients"]
+                            }
+                        }
+                    ]
+                })),
                 error: None,
             }
         }
@@ -181,7 +197,7 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
                     match args.action.as_str() {
                         "scrape" => {
                             let urls = args.urls.unwrap_or_default();
-                            let results = scrape_recipes(urls, &weight_chart).await;
+                            let results = scrape_recipes(urls, &weight_chart, weight_conversion_enabled).await;
                             Response {
                                 jsonrpc: JSONRPC_VERSION.into(),
                                 id,
@@ -212,7 +228,7 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
                             }
 
                             let mut recipes_to_scale = if let Some(urls) = args.urls {
-                                let results = scrape_recipes(urls, &weight_chart).await;
+                                let results = scrape_recipes(urls, &weight_chart, weight_conversion_enabled).await;
                                 results
                                     .into_values()
                                     .filter_map(|r| r.ok())
@@ -235,7 +251,9 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
 
                             for recipe in recipes_to_scale.iter_mut() {
                                 recipe.scale(target);
-                                recipe.convert_ingredients(&weight_chart);
+                                if weight_conversion_enabled {
+                                    recipe.convert_ingredients(&weight_chart);
+                                }
                             }
 
                             Response {
@@ -254,8 +272,8 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
                         }
                         "format" => {
                             let format_type = args.format_type.unwrap_or_else(|| "markdown".into());
-                            let recipes_to_format = if let Some(urls) = args.urls {
-                                let results = scrape_recipes(urls, &weight_chart).await;
+                            let mut recipes_to_format = if let Some(urls) = args.urls {
+                                let results = scrape_recipes(urls, &weight_chart, weight_conversion_enabled).await;
                                 results
                                     .into_values()
                                     .filter_map(|r| r.ok())
@@ -275,6 +293,12 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
                                     }),
                                 };
                             };
+
+                            for recipe in recipes_to_format.iter_mut() {
+                                if weight_conversion_enabled {
+                                    recipe.convert_ingredients(&weight_chart);
+                                }
+                            }
 
                             let formatted_output = match format_type.as_str() {
                                 "markdown" => recipes_to_format
@@ -369,6 +393,41 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
                                 data: None,
                             }),
                         },
+                    }
+                } else if name == "convert_ingredients" {
+                    let args_val = params["arguments"].clone();
+                    let ingredients: Vec<String> = match args_val["ingredients"].as_array() {
+                        Some(arr) => arr.iter().filter_map(|v| v.as_str()).map(|s| s.to_string()).collect(),
+                        None => {
+                            return Response {
+                                jsonrpc: JSONRPC_VERSION.into(),
+                                id,
+                                result: None,
+                                error: Some(ResponseError {
+                                    code: -32602,
+                                    message: "Invalid arguments: 'ingredients' must be an array of strings".into(),
+                                    data: None,
+                                }),
+                            };
+                        }
+                    };
+
+                    let converted: Vec<String> = ingredients.into_iter().map(|i| {
+                        recipes_mcp_rs::conversion::engine::format_with_weight(&i, &weight_chart)
+                    }).collect();
+
+                    Response {
+                        jsonrpc: JSONRPC_VERSION.into(),
+                        id,
+                        result: Some(json!({
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": converted.join("\n")
+                                }
+                            ]
+                        })),
+                        error: None,
                     }
                 } else {
                     Response {
