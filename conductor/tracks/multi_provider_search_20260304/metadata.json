@@ -1,0 +1,7 @@
+{
+  "id": "multi_provider_search_20260304",
+  "title": "Multi-Provider Recipe Search",
+  "description": "Expand recipe search to support multiple providers (Food Network, Serious Eats, etc.) with provider selection.",
+  "status": "todo",
+  "created_at": "2026-03-04T16:00:00Z"
+}

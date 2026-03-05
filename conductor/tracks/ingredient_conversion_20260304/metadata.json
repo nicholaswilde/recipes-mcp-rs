@@ -1,0 +1,7 @@
+{
+  "id": "ingredient_conversion_20260304",
+  "title": "Standalone Ingredient Conversion Tool",
+  "description": "Expose unit conversion logic as a standalone MCP tool for quick ingredient calculations.",
+  "status": "todo",
+  "created_at": "2026-03-04T16:00:00Z"
+}
