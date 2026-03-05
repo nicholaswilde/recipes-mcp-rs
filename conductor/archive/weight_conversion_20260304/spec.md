@@ -10,7 +10,6 @@ Enhance the scraping process to automatically convert volumetric measurements (c
 2. **Multi-tiered Data Source:** 
     - **Tier 1:** Local look-up (hardcoded or static file) based on the King Arthur chart.
     - **Tier 2:** Dynamic look-up on King Arthur's website if local match fails.
-    - **Tier 3:** Google search fallback for obscure ingredients.
 3. **Smart Matching:** Implement "best guess" logic for ambiguous ingredients (e.g., matching "flour" to "All-Purpose Flour").
 
 ## Functional Requirements
@@ -20,7 +19,7 @@ Enhance the scraping process to automatically convert volumetric measurements (c
 - **Formatting:** Append the weight in parentheses (e.g., "1 cup (120g) all-purpose flour").
 
 ## Non-Functional Requirements
-- **Latency:** Tier 1 look-ups should be near-instant. Tier 2/3 should be cached to minimize network calls.
+- **Latency:** Tier 1 look-ups should be near-instant. Tier 2 should be cached to minimize network calls.
 - **Resilience:** If conversion fails completely, return the original volumetric string.
 
 ## Acceptance Criteria
