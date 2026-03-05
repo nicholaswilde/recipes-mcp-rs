@@ -7,7 +7,7 @@
     - [x] **TDD:** Write unit tests to verify image URL extraction for both scrapers.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Data Model and Logic' (Protocol in workflow.md)
 
-## Phase 2: System Validation [checkpoint: ]
+## Phase 2: System Validation [checkpoint: b9be324]
 - [x] Task: System Integration and Quality Check
     - [x] Verify scraping with image-rich recipes (e.g., AllRecipes).
     - [x] Run `task test:ci` to ensure everything is correct.
