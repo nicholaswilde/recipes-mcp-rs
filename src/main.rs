@@ -1,5 +1,6 @@
 mod config;
 mod conversion;
+mod formatter;
 mod scaling;
 mod scraper;
 
@@ -24,6 +25,7 @@ struct ManageRecipesArgs {
     urls: Option<Vec<String>>,
     target_servings: Option<u32>,
     recipes: Option<Vec<Recipe>>,
+    format_type: Option<String>,
 }
 
 #[tokio::main]
@@ -108,27 +110,34 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
         "tools/list" => {
             let tool = Tool {
                 name: "manage_recipes".into(),
-                description: "Manage recipes including bulk scraping, parsing, and scaling".into(),
+                description:
+                    "Manage recipes including bulk scraping, parsing, scaling, and formatting"
+                        .into(),
                 input_schema: Some(ToolSchema {
                     properties: Some(json!({
                         "action": {
                             "type": "string",
-                            "enum": ["scrape", "scale"],
+                            "enum": ["scrape", "scale", "format"],
                             "description": "The action to perform"
                         },
                         "urls": {
                             "type": "array",
                             "items": { "type": "string" },
-                            "description": "List of recipe URLs to scrape (required for 'scrape' action, optional for 'scale' if 'recipes' provided)"
+                            "description": "List of recipe URLs to scrape (required for 'scrape' and 'format' action, optional for 'scale' if 'recipes' provided)"
                         },
                         "recipes": {
                             "type": "array",
                             "items": { "type": "object" },
-                            "description": "List of recipe objects to scale (required for 'scale' action if 'urls' not provided)"
+                            "description": "List of recipe objects to scale or format (required for 'scale'/'format' action if 'urls' not provided)"
                         },
                         "target_servings": {
                             "type": "integer",
                             "description": "The desired number of servings (required for 'scale' action)"
+                        },
+                        "format_type": {
+                            "type": "string",
+                            "enum": ["markdown", "json"],
+                            "description": "The desired output format (required for 'format' action, defaults to 'markdown')"
                         }
                     })),
                     required: Some(vec!["action".into()]),
@@ -231,6 +240,68 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
                                         {
                                             "type": "text",
                                             "text": serde_json::to_string_pretty(&recipes_to_scale).unwrap()
+                                        }
+                                    ]
+                                })),
+                                error: None,
+                            }
+                        }
+                        "format" => {
+                            let format_type = args.format_type.unwrap_or_else(|| "markdown".into());
+                            let recipes_to_format = if let Some(urls) = args.urls {
+                                let results = scrape_recipes(urls, &weight_chart).await;
+                                results
+                                    .into_values()
+                                    .filter_map(|r| r.ok())
+                                    .collect::<Vec<Recipe>>()
+                            } else if let Some(recipes) = args.recipes {
+                                recipes
+                            } else {
+                                return Response {
+                                    jsonrpc: JSONRPC_VERSION.into(),
+                                    id,
+                                    result: None,
+                                    error: Some(ResponseError {
+                                        code: -32602,
+                                        message: "Either 'urls' or 'recipes' must be provided for 'format' action"
+                                            .into(),
+                                        data: None,
+                                    }),
+                                };
+                            };
+
+                            let formatted_output = match format_type.as_str() {
+                                "markdown" => recipes_to_format
+                                    .iter()
+                                    .map(crate::formatter::to_markdown)
+                                    .collect::<Vec<String>>()
+                                    .join("\n\n---\n\n"),
+                                "json" => serde_json::to_string_pretty(&recipes_to_format).unwrap(),
+                                _ => {
+                                    return Response {
+                                        jsonrpc: JSONRPC_VERSION.into(),
+                                        id,
+                                        result: None,
+                                        error: Some(ResponseError {
+                                            code: -32602,
+                                            message: format!(
+                                                "Unsupported format_type: {}",
+                                                format_type
+                                            ),
+                                            data: None,
+                                        }),
+                                    };
+                                }
+                            };
+
+                            Response {
+                                jsonrpc: JSONRPC_VERSION.into(),
+                                id,
+                                result: Some(json!({
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": formatted_output
                                         }
                                     ]
                                 })),
