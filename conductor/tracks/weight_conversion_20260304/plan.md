@@ -1,17 +1,17 @@
 # Implementation Plan: Volumetric to Weight Conversion
 
-## Phase 1: Local Conversion Core [checkpoint: ]
-- [ ] Task: Implement Weight Chart Data Structure (Local Look-up)
-    - [ ] Create `src/conversion/data.rs` with hardcoded King Arthur chart entries.
-    - [ ] Add support for loading an external `config/weights.json` file.
-    - [ ] **TDD:** Write unit tests for data retrieval.
-- [ ] Task: Implement Volumetric Parsing Utility
-    - [ ] Create `src/conversion/parser.rs` to extract amounts and units from ingredient strings.
-    - [ ] **TDD:** Write unit tests for various string formats ("1 cup", "2 tbsp", "3/4 tsp").
-- [ ] Task: Implement Conversion Logic (Tier 1)
-    - [ ] Create `src/conversion/engine.rs` to apply ratios to parsed volumes.
-    - [ ] **TDD:** Write unit tests for local look-up conversion.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Local Conversion Core' (Protocol in workflow.md)
+## Phase 1: Local Conversion Core [checkpoint: 1d02430]
+- [x] Task: Implement Weight Chart Data Structure (Local Look-up)
+    - [x] Create `src/conversion/data.rs` with hardcoded King Arthur chart entries.
+    - [x] Add support for loading an external `config/weights.json` file.
+    - [x] **TDD:** Write unit tests for data retrieval.
+- [x] Task: Implement Volumetric Parsing Utility
+    - [x] Create `src/conversion/parser.rs` to extract amounts and units from ingredient strings.
+    - [x] **TDD:** Write unit tests for various string formats ("1 cup", "2 tbsp", "3/4 tsp").
+- [x] Task: Implement Conversion Logic (Tier 1)
+    - [x] Create `src/conversion/engine.rs` to apply ratios to parsed volumes.
+    - [x] **TDD:** Write unit tests for local look-up conversion.
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Local Conversion Core' (Protocol in workflow.md)
 
 ## Phase 2: Online Fallbacks [checkpoint: ]
 - [ ] Task: Implement King Arthur Web Look-up (Tier 2)
