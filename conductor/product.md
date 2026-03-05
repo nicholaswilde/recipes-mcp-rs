@@ -17,6 +17,7 @@ To provide a robust, automated interface for importing and parsing recipes from 
 - **Unified Tool Management:** Consolidates granular operations into a single, action-oriented toolset (`manage_recipes`) to optimize token usage.
 - **Bulk Processing:** Supports simultaneous scraping and parsing of multiple URLs in a single request for improved efficiency.
 - **Recipe Scaling:** Allows users to adjust servings for any recipe, automatically scaling ingredient quantities while maintaining formatting.
+- **Volumetric to Weight Conversion:** Automatically converts volumetric measurements (cups, tbsp, tsp) to gram weights using the King Arthur ingredient weight chart for improved baking accuracy.
 - **Granular Parsing:** Accurately identifies and separates recipe components including:
   - Ingredients (quantities, units, items)
   - Preparation and cooking steps
