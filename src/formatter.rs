@@ -23,6 +23,7 @@ pub fn to_markdown(recipe: &Recipe) -> String {
         || recipe.cook_time.is_some()
         || recipe.total_time.is_some()
         || recipe.servings.is_some()
+        || !recipe.diets.is_empty()
     {
         md.push_str("## Metadata\n");
         if let Some(prep) = &recipe.prep_time {
@@ -36,6 +37,26 @@ pub fn to_markdown(recipe: &Recipe) -> String {
         }
         if let Some(servings) = recipe.servings {
             md.push_str(&format!("- **Servings:** {}\n", servings));
+        }
+        if !recipe.diets.is_empty() {
+            md.push_str(&format!("- **Diets:** {}\n", recipe.diets.join(", ")));
+        }
+        md.push('\n');
+    }
+
+    if let Some(nutrition) = &recipe.nutrition {
+        md.push_str("## Nutrition\n");
+        if let Some(val) = nutrition.calories {
+            md.push_str(&format!("- **Calories:** {:.0}kcal\n", val));
+        }
+        if let Some(val) = nutrition.fat_grams {
+            md.push_str(&format!("- **Fat:** {:.1}g\n", val));
+        }
+        if let Some(val) = nutrition.carbohydrate_grams {
+            md.push_str(&format!("- **Carbs:** {:.1}g\n", val));
+        }
+        if let Some(val) = nutrition.protein_grams {
+            md.push_str(&format!("- **Protein:** {:.1}g\n", val));
         }
         md.push('\n');
     }
@@ -75,6 +96,7 @@ mod tests {
             total_time: Some("15m".into()),
             image_url: Some("http://example.com/image.jpg".into()),
             servings: Some(4),
+            ..Recipe::default()
         };
 
         let md = to_markdown(&recipe);

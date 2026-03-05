@@ -1,5 +1,5 @@
 use recipe_scraper::{Extract, SchemaOrgEntry, SchemaOrgRecipe, Scrape};
-use rust_recipe::RecipeInformationProvider;
+use rust_recipe::{NutritionInformation, RecipeInformationProvider};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
@@ -15,6 +15,21 @@ pub enum ScraperError {
 }
 
 #[derive(Debug, Serialize, Default, PartialEq, Clone, Deserialize)]
+pub struct Nutrition {
+    pub calories: Option<f32>,
+    pub carbohydrate_grams: Option<f32>,
+    pub cholesterol_milligrams: Option<f32>,
+    pub fat_grams: Option<f32>,
+    pub fiber_grams: Option<f32>,
+    pub protein_grams: Option<f32>,
+    pub saturated_fat_grams: Option<f32>,
+    pub sodium_milligrams: Option<f32>,
+    pub sugar_grams: Option<f32>,
+    pub trans_fat_grams: Option<f32>,
+    pub unsaturated_fat_grams: Option<f32>,
+}
+
+#[derive(Debug, Serialize, Default, PartialEq, Clone, Deserialize)]
 pub struct Recipe {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -25,6 +40,26 @@ pub struct Recipe {
     pub total_time: Option<String>,
     pub image_url: Option<String>,
     pub servings: Option<u32>,
+    pub nutrition: Option<Nutrition>,
+    pub diets: Vec<String>,
+}
+
+impl From<NutritionInformation> for Nutrition {
+    fn from(info: NutritionInformation) -> Self {
+        Self {
+            calories: info.calories,
+            carbohydrate_grams: info.carbohydrate_grams,
+            cholesterol_milligrams: info.cholesterol_milligrams,
+            fat_grams: info.fat_grams,
+            fiber_grams: info.fiber_grams,
+            protein_grams: info.protein_grams,
+            saturated_fat_grams: info.saturated_fat_grams,
+            sodium_milligrams: info.sodium_milligrams,
+            sugar_grams: info.sugar_grams,
+            trans_fat_grams: info.trans_fat_grams,
+            unsaturated_fat_grams: info.unsaturated_fat_grams,
+        }
+    }
 }
 
 impl From<Box<dyn RecipeInformationProvider>> for Recipe {
@@ -48,6 +83,13 @@ impl From<Box<dyn RecipeInformationProvider>> for Recipe {
             total_time: provider.total_time().map(|d| format!("{}s", d.as_secs())),
             image_url: provider.image_url(),
             servings,
+            nutrition: provider.nutrition().map(Nutrition::from),
+            diets: provider
+                .suitable_diets()
+                .unwrap_or_default()
+                .into_iter()
+                .map(|d| format!("{:?}", d))
+                .collect(),
         }
     }
 }
@@ -96,6 +138,8 @@ impl From<SchemaOrgRecipe> for Recipe {
             total_time: schema.total_time().clone().and_then(|d| d.human_readable()),
             image_url,
             servings,
+            nutrition: None, // schema-org-recipe might not have this yet
+            diets: vec![],
         }
     }
 }
@@ -222,6 +266,13 @@ pub async fn scrape_recipes(
 mod tests {
     use super::*;
     use rust_recipe::{NutritionInformation, RestrictedDiet};
+
+    #[test]
+    fn test_recipe_dietary_metadata_fields_exist() {
+        let recipe = Recipe::default();
+        assert!(recipe.nutrition.is_none());
+        assert!(recipe.diets.is_empty());
+    }
 
     #[tokio::test]
     async fn test_invalid_url() {

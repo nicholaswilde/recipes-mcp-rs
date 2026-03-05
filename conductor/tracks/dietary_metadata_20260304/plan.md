@@ -1,11 +1,11 @@
 # Implementation Plan: Dietary Metadata Support
 
 ## Phase 1: Data Model and Logic [checkpoint: ]
-- [ ] Task: Update `Recipe` Data Model
+- [x] Task: Update `Recipe` Data Model
     - [ ] Add `nutrition` and `diets` fields to `Recipe` in `src/scraper.rs`.
     - [ ] Update `From` implementations to handle these fields.
     - [ ] **TDD:** Write unit tests to verify dietary metadata extraction.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Model and Logic' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Data Model and Logic' (Protocol in workflow.md)
 
 ## Phase 2: System Validation
 - [ ] Task: System Integration and Quality Check

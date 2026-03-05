@@ -1,0 +1,17 @@
+description = "Updates project documentation to reflect current project state."
+
+prompt = '''
+You are a technical writer and senior developer tasked with keeping the project's documentation in sync with the source code.
+
+### Workflow:
+1.  **Analyze Codebase**: Review `src/config.rs` and `src/main.rs` to identify all available configuration parameters and tools.
+2.  **Update Documentation**:
+    - Update documentation in the `conductor/` directory if necessary.
+    - If a `README.md` exists, ensure it is up-to-date with current features and configuration.
+3.  **Verification**: 
+    - Check for broken links or outdated information.
+4.  **Commit**: Stage changed files and commit with the message `docs: update documentation`.
+
+### Execution:
+Please start by analyzing the current configuration and tool definitions, then proceed with the updates.
+'''
