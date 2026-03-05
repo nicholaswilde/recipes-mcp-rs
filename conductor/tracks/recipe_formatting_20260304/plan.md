@@ -1,13 +1,13 @@
 # Implementation Plan: Recipe Formatting Support
 
-## Phase 1: Formatting Logic and Tool Update [checkpoint: ]
+## Phase 1: Formatting Logic and Tool Update [checkpoint: 82aa5b2]
 - [x] Task: Create Markdown Template Utility
     - [x] Create a utility to format `Recipe` structs into Markdown.
     - [x] **TDD:** Write unit tests for the Markdown output.
 - [x] Task: Update `manage_recipes` Tool
     - [x] Add the `"format"` action to `src/main.rs`.
     - [x] Update the `ManageRecipesArgs` struct and the tool's JSON schema.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Formatting Logic and Tool Update' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Formatting Logic and Tool Update' (Protocol in workflow.md)
 
 ## Phase 2: Validation
 - [ ] Task: System Integration and Quality Check
