@@ -3,6 +3,7 @@ mod conversion;
 mod formatter;
 mod scaling;
 mod scraper;
+mod search;
 
 use crate::config::{AppConfig, Args};
 use crate::conversion::data::WeightChart;
@@ -26,6 +27,8 @@ struct ManageRecipesArgs {
     target_servings: Option<u32>,
     recipes: Option<Vec<Recipe>>,
     format_type: Option<String>,
+    query: Option<String>,
+    limit: Option<u32>,
 }
 
 #[tokio::main]
@@ -111,13 +114,13 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
             let tool = Tool {
                 name: "manage_recipes".into(),
                 description:
-                    "Manage recipes including bulk scraping, parsing, scaling, and formatting"
+                    "Manage recipes including bulk scraping, parsing, scaling, formatting, and search"
                         .into(),
                 input_schema: Some(ToolSchema {
                     properties: Some(json!({
                         "action": {
                             "type": "string",
-                            "enum": ["scrape", "scale", "format"],
+                            "enum": ["scrape", "scale", "format", "search"],
                             "description": "The action to perform"
                         },
                         "urls": {
@@ -138,6 +141,14 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
                             "type": "string",
                             "enum": ["markdown", "json"],
                             "description": "The desired output format (required for 'format' action, defaults to 'markdown')"
+                        },
+                        "query": {
+                            "type": "string",
+                            "description": "The search query to find recipes (required for 'search' action)"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of search results to return (optional for 'search' action, default 5)"
                         }
                     })),
                     required: Some(vec!["action".into()]),
@@ -306,6 +317,51 @@ async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Respons
                                     ]
                                 })),
                                 error: None,
+                            }
+                        }
+                        "search" => {
+                            let query = match args.query {
+                                Some(q) => q,
+                                None => {
+                                    return Response {
+                                        jsonrpc: JSONRPC_VERSION.into(),
+                                        id,
+                                        result: None,
+                                        error: Some(ResponseError {
+                                            code: -32602,
+                                            message: "'query' is required for 'search' action"
+                                                .into(),
+                                            data: None,
+                                        }),
+                                    };
+                                }
+                            };
+                            let limit = args.limit.unwrap_or(5);
+                            let results = crate::search::search_recipes(&query, limit).await;
+                            match results {
+                                Ok(res) => Response {
+                                    jsonrpc: JSONRPC_VERSION.into(),
+                                    id,
+                                    result: Some(json!({
+                                       "content": [
+                                           {
+                                               "type": "text",
+                                               "text": serde_json::to_string_pretty(&res).unwrap()
+                                           }
+                                       ]
+                                    })),
+                                    error: None,
+                                },
+                                Err(e) => Response {
+                                    jsonrpc: JSONRPC_VERSION.into(),
+                                    id,
+                                    result: None,
+                                    error: Some(ResponseError {
+                                        code: -32603,
+                                        message: format!("Search failed: {}", e),
+                                        data: None,
+                                    }),
+                                },
                             }
                         }
                         _ => Response {
