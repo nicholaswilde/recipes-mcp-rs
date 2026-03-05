@@ -16,6 +16,7 @@ To provide a robust, automated interface for importing and parsing recipes from 
 - **Intelligent Web Scraping:** Employs a tiered strategy using `rust-recipe` and `recipe-scraper` with automatic fallback to ensure high-reliability extraction from diverse websites.
 - **Unified Tool Management:** Consolidates granular operations into a single, action-oriented toolset (`manage_recipes`) to optimize token usage.
 - **Bulk Processing:** Supports simultaneous scraping and parsing of multiple URLs in a single request for improved efficiency.
+- **Recipe Scaling:** Allows users to adjust servings for any recipe, automatically scaling ingredient quantities while maintaining formatting.
 - **Granular Parsing:** Accurately identifies and separates recipe components including:
   - Ingredients (quantities, units, items)
   - Preparation and cooking steps
