@@ -19,6 +19,13 @@
 - [ ] Update `main.rs` to start either the stdio loop or the Axum server based on the CLI arguments.
 - [ ] Ensure proper shutdown handling for the HTTP server.
 
-## Phase 5: Verification
+## Phase 5: Testing
+- [ ] Add unit tests for `Args` parsing (new `--port` flag).
+- [ ] Add unit tests for `handle_request` in a standalone module.
+- [ ] Create integration tests for Axum routes using `axum::test_helpers` or `tower::ServiceExt`.
+- [ ] Mock MCP client to verify SSE message delivery and endpoint URL initialization.
+
+## Phase 6: Verification
 - [ ] Verify `stdio` mode still works correctly with `task test`.
+- [ ] Run new integration tests for HTTP/SSE.
 - [ ] Manual verification of HTTP mode using `curl` or an MCP client that supports HTTP/SSE.
