@@ -4,6 +4,7 @@ mod scaling;
 mod scraper;
 
 use crate::config::{AppConfig, Args};
+use crate::conversion::data::WeightChart;
 use crate::scraper::{Recipe, scrape_recipes};
 use clap::Parser;
 use mcp_sdk_rs::{
@@ -13,6 +14,7 @@ use mcp_sdk_rs::{
 use serde::Deserialize;
 use serde_json::json;
 use std::io::{BufRead, Write};
+use std::sync::Arc;
 use tracing::{Level, error, info};
 use tracing_subscriber::FmtSubscriber;
 
@@ -49,6 +51,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Recipes MCP Server starting...");
 
+    let weight_chart = Arc::new(WeightChart::new());
+
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
 
@@ -64,7 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         match serde_json::from_str::<Request>(&line) {
             Ok(req) => {
-                let response = handle_request(req).await;
+                let response = handle_request(req, weight_chart.clone()).await;
                 let response_json = serde_json::to_string(&response).unwrap();
                 if let Err(e) = writeln!(stdout, "{}", response_json) {
                     error!("Failed to write to stdout: {}", e);
@@ -81,7 +85,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn handle_request(req: Request) -> Response {
+async fn handle_request(req: Request, weight_chart: Arc<WeightChart>) -> Response {
     let id = req.id.clone();
     match req.method.as_str() {
         "initialize" => Response {
@@ -162,7 +166,7 @@ async fn handle_request(req: Request) -> Response {
                     match args.action.as_str() {
                         "scrape" => {
                             let urls = args.urls.unwrap_or_default();
-                            let results = scrape_recipes(urls).await;
+                            let results = scrape_recipes(urls, &weight_chart).await;
                             Response {
                                 jsonrpc: JSONRPC_VERSION.into(),
                                 id,
@@ -193,7 +197,7 @@ async fn handle_request(req: Request) -> Response {
                             }
 
                             let mut recipes_to_scale = if let Some(urls) = args.urls {
-                                let results = scrape_recipes(urls).await;
+                                let results = scrape_recipes(urls, &weight_chart).await;
                                 results
                                     .into_values()
                                     .filter_map(|r| r.ok())
@@ -216,6 +220,7 @@ async fn handle_request(req: Request) -> Response {
 
                             for recipe in recipes_to_scale.iter_mut() {
                                 recipe.scale(target);
+                                recipe.convert_ingredients(&weight_chart);
                             }
 
                             Response {
