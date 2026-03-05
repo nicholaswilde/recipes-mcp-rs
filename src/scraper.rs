@@ -23,6 +23,7 @@ pub struct Recipe {
     pub prep_time: Option<String>,
     pub cook_time: Option<String>,
     pub total_time: Option<String>,
+    pub image_url: Option<String>,
 }
 
 impl From<Box<dyn RecipeInformationProvider>> for Recipe {
@@ -35,6 +36,7 @@ impl From<Box<dyn RecipeInformationProvider>> for Recipe {
             prep_time: provider.prep_time().map(|d| format!("{}s", d.as_secs())),
             cook_time: provider.cook_time().map(|d| format!("{}s", d.as_secs())),
             total_time: provider.total_time().map(|d| format!("{}s", d.as_secs())),
+            image_url: provider.image_url(),
         }
     }
 }
@@ -58,6 +60,8 @@ impl From<SchemaOrgRecipe> for Recipe {
             vec![]
         };
 
+        let image_url = None;
+
         Self {
             name: Some(schema.name().clone()),
             description: Some(schema.description().clone()),
@@ -66,6 +70,7 @@ impl From<SchemaOrgRecipe> for Recipe {
             prep_time: schema.prep_time().clone().and_then(|d| d.human_readable()),
             cook_time: schema.cook_time().clone().and_then(|d| d.human_readable()),
             total_time: schema.total_time().clone().and_then(|d| d.human_readable()),
+            image_url,
         }
     }
 }
@@ -144,6 +149,7 @@ pub async fn scrape_recipes(urls: Vec<String>) -> HashMap<String, Result<Recipe,
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rust_recipe::{NutritionInformation, RestrictedDiet};
 
     #[tokio::test]
     async fn test_invalid_url() {
@@ -158,5 +164,71 @@ mod tests {
         assert_eq!(results.len(), 2);
         assert!(results.get("not-a-url").unwrap().is_err());
         assert!(results.get("invalid://url").unwrap().is_err());
+    }
+
+    #[test]
+    fn test_recipe_image_field_exists() {
+        let recipe = Recipe::default();
+        // This will fail to compile if the field doesn't exist
+        assert!(recipe.image_url.is_none());
+    }
+
+    #[test]
+    fn test_recipe_from_provider_with_image() {
+        struct MockProvider;
+        impl RecipeInformationProvider for MockProvider {
+            fn name(&self) -> Option<String> {
+                Some("Test".into())
+            }
+            fn description(&self) -> Option<String> {
+                None
+            }
+            fn ingredients(&self) -> Option<Vec<String>> {
+                None
+            }
+            fn instructions(&self) -> Option<Vec<String>> {
+                None
+            }
+            fn prep_time(&self) -> Option<std::time::Duration> {
+                None
+            }
+            fn cook_time(&self) -> Option<std::time::Duration> {
+                None
+            }
+            fn total_time(&self) -> Option<std::time::Duration> {
+                None
+            }
+            fn image_url(&self) -> Option<String> {
+                Some("http://example.com/image.jpg".into())
+            }
+            fn authors(&self) -> Option<Vec<String>> {
+                None
+            }
+            fn categories(&self) -> Option<Vec<String>> {
+                None
+            }
+            fn cuisines(&self) -> Option<Vec<String>> {
+                None
+            }
+            fn yields(&self) -> Option<String> {
+                None
+            }
+            fn language(&self) -> Option<String> {
+                None
+            }
+            fn nutrition(&self) -> Option<NutritionInformation> {
+                None
+            }
+            fn suitable_diets(&self) -> Option<Vec<RestrictedDiet>> {
+                None
+            }
+        }
+
+        let provider: Box<dyn RecipeInformationProvider> = Box::new(MockProvider);
+        let recipe = Recipe::from(provider);
+        assert_eq!(
+            recipe.image_url,
+            Some("http://example.com/image.jpg".into())
+        );
     }
 }
