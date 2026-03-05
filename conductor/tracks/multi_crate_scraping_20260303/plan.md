@@ -14,4 +14,4 @@
 - [x] Task: Final System Verification
     - [x] Run `task test:ci` to ensure all tests pass.
     - [x] Manually verify scraping with a known "hard" recipe URL.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Integration and Validation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Integration and Validation' (Protocol in workflow.md)
