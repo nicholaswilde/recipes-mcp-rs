@@ -22,13 +22,13 @@
     - [x] **TDD:** Test ambiguity resolution (e.g., "flour" defaults to AP).
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Online Fallbacks' (Protocol in workflow.md)
 
-## Phase 3: Integration and Normalization [checkpoint: ]
-- [ ] Task: Integrate Conversion into `scrape_recipe` flow
-    - [ ] Update `src/scraper.rs` to call the conversion engine for each ingredient.
-    - [ ] **TDD:** Integration tests for full scraping-to-conversion flow.
-- [ ] Task: Implement Output Formatting
-    - [ ] Logic to append weight in parentheses to original string.
-    - [ ] **TDD:** Verify final string formatting.
-- [ ] Task: Final System Verification
-    - [ ] Run `task test:ci` and perform manual verification with complex recipes.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Integration and Normalization' (Protocol in workflow.md)
+## Phase 3: Integration and Normalization [checkpoint: d4c4bf9]
+- [x] Task: Integrate Conversion into `scrape_recipe` flow
+    - [x] Update `src/scraper.rs` to call the conversion engine for each ingredient.
+    - [x] **TDD:** Integration tests for full scraping-to-conversion flow.
+- [x] Task: Implement Output Formatting
+    - [x] Logic to append weight in parentheses to original string.
+    - [x] **TDD:** Verify final string formatting.
+- [x] Task: Final System Verification
+    - [x] Run `task test:ci` and perform manual verification with complex recipes.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Integration and Normalization' (Protocol in workflow.md)
