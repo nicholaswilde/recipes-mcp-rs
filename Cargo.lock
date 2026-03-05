@@ -2013,6 +2013,7 @@ dependencies = [
  "envy",
  "mcp-sdk-rs",
  "recipe-scraper",
+ "regex",
  "reqwest 0.13.2",
  "rust-recipe",
  "serde",

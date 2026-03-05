@@ -1,6 +1,6 @@
 use recipe_scraper::{Extract, SchemaOrgEntry, SchemaOrgRecipe, Scrape};
 use rust_recipe::RecipeInformationProvider;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
 use url::Url;
@@ -14,7 +14,7 @@ pub enum ScraperError {
     ScrapeFailed(String),
 }
 
-#[derive(Debug, Serialize, Default, PartialEq, Clone)]
+#[derive(Debug, Serialize, Default, PartialEq, Clone, Deserialize)]
 pub struct Recipe {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -24,10 +24,20 @@ pub struct Recipe {
     pub cook_time: Option<String>,
     pub total_time: Option<String>,
     pub image_url: Option<String>,
+    pub servings: Option<u32>,
 }
 
 impl From<Box<dyn RecipeInformationProvider>> for Recipe {
     fn from(provider: Box<dyn RecipeInformationProvider>) -> Self {
+        let servings = provider.yields().and_then(|y| {
+            // Try to parse first number from string like "4 servings"
+            y.chars()
+                .filter(|c| c.is_ascii_digit())
+                .collect::<String>()
+                .parse::<u32>()
+                .ok()
+        });
+
         Self {
             name: provider.name(),
             description: provider.description(),
@@ -37,6 +47,7 @@ impl From<Box<dyn RecipeInformationProvider>> for Recipe {
             cook_time: provider.cook_time().map(|d| format!("{}s", d.as_secs())),
             total_time: provider.total_time().map(|d| format!("{}s", d.as_secs())),
             image_url: provider.image_url(),
+            servings,
         }
     }
 }
@@ -61,6 +72,19 @@ impl From<SchemaOrgRecipe> for Recipe {
         };
 
         let image_url = None;
+        let servings = schema
+            .yields()
+            .as_ref()
+            .map(|y| {
+                // y is Yield enum, which has Display.
+                y.to_string()
+                    .chars()
+                    .filter(|c| c.is_ascii_digit())
+                    .collect::<String>()
+                    .parse::<u32>()
+                    .unwrap_or(0)
+            })
+            .filter(|&s| s > 0);
 
         Self {
             name: Some(schema.name().clone()),
@@ -71,6 +95,22 @@ impl From<SchemaOrgRecipe> for Recipe {
             cook_time: schema.cook_time().clone().and_then(|d| d.human_readable()),
             total_time: schema.total_time().clone().and_then(|d| d.human_readable()),
             image_url,
+            servings,
+        }
+    }
+}
+
+impl Recipe {
+    pub fn scale(&mut self, target_servings: u32) {
+        if let Some(original) = self.servings {
+            if original == 0 || target_servings == 0 {
+                return;
+            }
+            let factor = target_servings as f64 / original as f64;
+            for ingredient in self.ingredients.iter_mut() {
+                *ingredient = crate::scaling::scale_quantity(ingredient, factor);
+            }
+            self.servings = Some(target_servings);
         }
     }
 }

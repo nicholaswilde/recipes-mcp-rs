@@ -1,8 +1,9 @@
 mod config;
+mod scaling;
 mod scraper;
 
 use crate::config::{AppConfig, Args};
-use crate::scraper::scrape_recipes;
+use crate::scraper::{Recipe, scrape_recipes};
 use clap::Parser;
 use mcp_sdk_rs::{
     protocol::{JSONRPC_VERSION, Request, Response, ResponseError},
@@ -17,7 +18,9 @@ use tracing_subscriber::FmtSubscriber;
 #[derive(Debug, Deserialize)]
 struct ManageRecipesArgs {
     action: String,
-    urls: Vec<String>,
+    urls: Option<Vec<String>>,
+    target_servings: Option<u32>,
+    recipes: Option<Vec<Recipe>>,
 }
 
 #[tokio::main]
@@ -100,21 +103,30 @@ async fn handle_request(req: Request) -> Response {
         "tools/list" => {
             let tool = Tool {
                 name: "manage_recipes".into(),
-                description: "Manage recipes including bulk scraping and parsing".into(),
+                description: "Manage recipes including bulk scraping, parsing, and scaling".into(),
                 input_schema: Some(ToolSchema {
                     properties: Some(json!({
                         "action": {
                             "type": "string",
-                            "enum": ["scrape"],
+                            "enum": ["scrape", "scale"],
                             "description": "The action to perform"
                         },
                         "urls": {
                             "type": "array",
                             "items": { "type": "string" },
-                            "description": "List of recipe URLs to scrape"
+                            "description": "List of recipe URLs to scrape (required for 'scrape' action, optional for 'scale' if 'recipes' provided)"
+                        },
+                        "recipes": {
+                            "type": "array",
+                            "items": { "type": "object" },
+                            "description": "List of recipe objects to scale (required for 'scale' action if 'urls' not provided)"
+                        },
+                        "target_servings": {
+                            "type": "integer",
+                            "description": "The desired number of servings (required for 'scale' action)"
                         }
                     })),
-                    required: Some(vec!["action".into(), "urls".into()]),
+                    required: Some(vec!["action".into()]),
                 }),
                 annotations: None,
             };
@@ -148,7 +160,8 @@ async fn handle_request(req: Request) -> Response {
 
                     match args.action.as_str() {
                         "scrape" => {
-                            let results = scrape_recipes(args.urls).await;
+                            let urls = args.urls.unwrap_or_default();
+                            let results = scrape_recipes(urls).await;
                             Response {
                                 jsonrpc: JSONRPC_VERSION.into(),
                                 id,
@@ -157,6 +170,61 @@ async fn handle_request(req: Request) -> Response {
                                         {
                                             "type": "text",
                                             "text": serde_json::to_string_pretty(&results).unwrap()
+                                        }
+                                    ]
+                                })),
+                                error: None,
+                            }
+                        }
+                        "scale" => {
+                            let target = args.target_servings.unwrap_or(0);
+                            if target == 0 {
+                                return Response {
+                                    jsonrpc: JSONRPC_VERSION.into(),
+                                    id,
+                                    result: None,
+                                    error: Some(ResponseError {
+                                        code: -32602,
+                                        message: "target_servings must be greater than 0".into(),
+                                        data: None,
+                                    }),
+                                };
+                            }
+
+                            let mut recipes_to_scale = if let Some(urls) = args.urls {
+                                let results = scrape_recipes(urls).await;
+                                results
+                                    .into_values()
+                                    .filter_map(|r| r.ok())
+                                    .collect::<Vec<Recipe>>()
+                            } else if let Some(recipes) = args.recipes {
+                                recipes
+                            } else {
+                                return Response {
+                                    jsonrpc: JSONRPC_VERSION.into(),
+                                    id,
+                                    result: None,
+                                    error: Some(ResponseError {
+                                        code: -32602,
+                                        message: "Either 'urls' or 'recipes' must be provided for 'scale' action"
+                                            .into(),
+                                        data: None,
+                                    }),
+                                };
+                            };
+
+                            for recipe in recipes_to_scale.iter_mut() {
+                                recipe.scale(target);
+                            }
+
+                            Response {
+                                jsonrpc: JSONRPC_VERSION.into(),
+                                id,
+                                result: Some(json!({
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": serde_json::to_string_pretty(&recipes_to_scale).unwrap()
                                         }
                                     ]
                                 })),
