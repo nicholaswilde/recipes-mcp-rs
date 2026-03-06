@@ -3,11 +3,37 @@ use reqwest::header::USER_AGENT;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
+use crate::dietary::{DietaryPreference, DietaryFilters};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct SearchResult {
     pub title: String,
     pub url: String,
+}
+
+impl SearchResult {
+    pub fn matches_filters(&self, filters: &DietaryFilters) -> bool {
+        if filters.preferences.is_empty() {
+            return true;
+        }
+
+        let text = format!("{} {}", self.title, self.url).to_lowercase();
+        
+        for pref in &filters.preferences {
+            let matches = match pref {
+                DietaryPreference::Vegan => text.contains("vegan"),
+                DietaryPreference::Vegetarian => text.contains("vegetarian") || text.contains("vegan"),
+                DietaryPreference::GlutenFree => text.contains("gluten-free") || text.contains("gluten free"),
+                DietaryPreference::DairyFree => text.contains("dairy-free") || text.contains("dairy free"),
+                DietaryPreference::Keto => text.contains("keto"),
+                DietaryPreference::Paleo => text.contains("paleo"),
+            };
+            if !matches {
+                return false;
+            }
+        }
+        true
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
@@ -132,8 +158,6 @@ impl RecipeSearchProvider for FoodNetworkProvider {
         }
 
         let document = Html::parse_document(&html_content);
-        // Food Network often uses a simple structure for search results
-        // Headline is usually in a link with class m-RecipeCard__a-Headline
         let selectors = [
             "a.m-RecipeCard__a-Headline",
             "h3.m-RecipeCard__a-Headline a",
@@ -152,7 +176,6 @@ impl RecipeSearchProvider for FoodNetworkProvider {
                 let href = if element.value().name() == "a" {
                     element.value().attr("href").map(|s| s.to_string())
                 } else {
-                    // Try to find ancestor a
                     let mut parent = element.parent();
                     let mut link = None;
                     while let Some(p) = parent {
@@ -268,6 +291,7 @@ pub async fn search_recipes(
     query: &str,
     limit: u32,
     provider: RecipeProvider,
+    filters: DietaryFilters,
 ) -> Result<Vec<SearchResult>, ScraperError> {
     let p: Box<dyn RecipeSearchProvider> = match provider {
         RecipeProvider::AllRecipes => Box::new(AllRecipesProvider),
@@ -275,7 +299,15 @@ pub async fn search_recipes(
         RecipeProvider::SeriousEats => Box::new(SeriousEatsProvider),
     };
     
-    p.search(query, limit).await
+    let results = p.search(query, limit * 2).await?; // Fetch more to allow for filtering
+    
+    let filtered: Vec<SearchResult> = results
+        .into_iter()
+        .filter(|r| r.matches_filters(&filters))
+        .take(limit as usize)
+        .collect();
+
+    Ok(filtered)
 }
 
 #[cfg(test)]
@@ -284,7 +316,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_search_recipes_not_empty() {
-        let results = search_recipes("lasagna", 5, RecipeProvider::AllRecipes).await;
+        let results = search_recipes("lasagna", 5, RecipeProvider::AllRecipes, DietaryFilters::default()).await;
         if let Ok(res) = results {
             assert!(!res.is_empty());
             assert!(res.len() <= 5);
@@ -295,10 +327,8 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_search_food_network() {
-        let results = search_recipes("lasagna", 5, RecipeProvider::FoodNetwork).await;
+        let results = search_recipes("lasagna", 5, RecipeProvider::FoodNetwork, DietaryFilters::default()).await;
         if let Ok(res) = results {
-            // Sites can be flaky or block in CI, so we check if it succeeded OR returned results
-            // If it failed with a block error, we don't fail the test
             assert!(!res.is_empty());
             assert!(res[0].url.contains("foodnetwork.com"));
         }
@@ -306,10 +336,27 @@ mod tests {
 
     #[tokio::test]
     async fn test_search_serious_eats() {
-        let results = search_recipes("lasagna", 5, RecipeProvider::SeriousEats).await;
+        let results = search_recipes("lasagna", 5, RecipeProvider::SeriousEats, DietaryFilters::default()).await;
         if let Ok(res) = results {
             assert!(!res.is_empty());
             assert!(res[0].url.contains("seriouseats.com"));
         }
+    }
+
+    #[test]
+    fn test_search_result_matches_filters() {
+        let res = SearchResult {
+            title: "Vegan Lasagna".into(),
+            url: "http://example.com/vegan-lasagna".into(),
+        };
+        let filters = DietaryFilters {
+            preferences: vec![DietaryPreference::Vegan],
+        };
+        assert!(res.matches_filters(&filters));
+
+        let filters_gf = DietaryFilters {
+            preferences: vec![DietaryPreference::GlutenFree],
+        };
+        assert!(!res.matches_filters(&filters_gf));
     }
 }

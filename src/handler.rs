@@ -3,7 +3,7 @@ use crate::conversion::data::WeightChart;
 use crate::formatter;
 use crate::scraper::{Recipe, scrape_recipes, ScraperError};
 use crate::search;
-use crate::nutrition::{NutritionChart, calculate_nutrition};
+use crate::nutrition::NutritionChart;
 use crate::dietary::{DietaryPreference, DietaryFilters};
 use serde::Deserialize;
 use serde_json::json;
@@ -149,10 +149,33 @@ pub async fn handle_request(
                         }
                     };
 
+                    let dietary_filters = DietaryFilters {
+                        preferences: args.dietary_filters.clone().unwrap_or_default(),
+                    };
+
                     match args.action.as_str() {
                         "scrape" => {
                             let urls = args.urls.unwrap_or_default();
                             let results = scrape_recipes(urls, &weight_chart, weight_conversion_enabled).await;
+                            
+                            // Apply filtering
+                            let filtered_results: HashMap<String, Result<Recipe, ScraperError>> = results
+                                .into_iter()
+                                .map(|(url, res)| {
+                                    let filtered_res = match res {
+                                        Ok(recipe) => {
+                                            if recipe.matches_filters(&dietary_filters) {
+                                                Ok(recipe)
+                                            } else {
+                                                Err(ScraperError::ScrapeFailed("Recipe does not match dietary filters".into()))
+                                            }
+                                        },
+                                        Err(e) => Err(e),
+                                    };
+                                    (url, filtered_res)
+                                })
+                                .collect();
+
                             Response {
                                 jsonrpc: JSONRPC_VERSION.into(),
                                 id,
@@ -160,7 +183,7 @@ pub async fn handle_request(
                                     "content": [
                                         {
                                             "type": "text",
-                                            "text": serde_json::to_string_pretty(&results).unwrap()
+                                            "text": serde_json::to_string_pretty(&filtered_results).unwrap()
                                         }
                                     ]
                                 })),
@@ -187,9 +210,10 @@ pub async fn handle_request(
                                 results
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
+                                    .filter(|r| r.matches_filters(&dietary_filters))
                                     .collect()
                             } else if let Some(recipes) = args.recipes {
-                                recipes
+                                recipes.into_iter().filter(|r| r.matches_filters(&dietary_filters)).collect()
                             } else {
                                 return Response {
                                     jsonrpc: JSONRPC_VERSION.into(),
@@ -232,9 +256,10 @@ pub async fn handle_request(
                                 results
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
+                                    .filter(|r| r.matches_filters(&dietary_filters))
                                     .collect()
                             } else if let Some(recipes) = args.recipes {
-                                recipes
+                                recipes.into_iter().filter(|r| r.matches_filters(&dietary_filters)).collect()
                             } else {
                                 return Response {
                                     jsonrpc: JSONRPC_VERSION.into(),
@@ -312,7 +337,7 @@ pub async fn handle_request(
                             };
                             let limit = args.limit.unwrap_or(5);
                             let provider = args.provider.unwrap_or_default();
-                            let results = search::search_recipes(&query, limit, provider).await;
+                            let results = search::search_recipes(&query, limit, provider, dietary_filters).await;
                             match results {
                                 Ok(res) => Response {
                                     jsonrpc: JSONRPC_VERSION.into(),
@@ -345,9 +370,10 @@ pub async fn handle_request(
                                 results
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
+                                    .filter(|r| r.matches_filters(&dietary_filters))
                                     .collect()
                             } else if let Some(recipes) = args.recipes {
-                                recipes
+                                recipes.into_iter().filter(|r| r.matches_filters(&dietary_filters)).collect()
                             } else {
                                 return Response {
                                     jsonrpc: JSONRPC_VERSION.into(),

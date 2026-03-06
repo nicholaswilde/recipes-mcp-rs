@@ -143,4 +143,17 @@ mod tests {
         assert!(md.contains("**Carbs:** 30.0g"));
         assert!(md.contains("**Protein:** 20.0g"));
     }
+
+    #[test]
+    fn test_to_markdown_with_diets() {
+        let recipe = Recipe {
+            name: Some("Vegan Salad".into()),
+            diets: vec!["Vegan".into(), "Paleo".into()],
+            ..Recipe::default()
+        };
+
+        let md = to_markdown(&recipe);
+        assert!(md.contains("## Metadata"));
+        assert!(md.contains("**Diets:** Vegan, Paleo"));
+    }
 }

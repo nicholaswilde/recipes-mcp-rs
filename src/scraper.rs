@@ -1,6 +1,7 @@
 use recipe_scraper::{Extract, SchemaOrgEntry, SchemaOrgRecipe, Scrape};
 use rust_recipe::{NutritionInformation, RecipeInformationProvider};
 use crate::nutrition::{NutritionalInfo, NutritionChart, calculate_nutrition};
+use crate::dietary::{DietaryPreference, DietaryFilters};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
@@ -196,6 +197,41 @@ impl Recipe {
         let weights = self.get_ingredient_weights(weight_chart);
         let info = calculate_nutrition(&weights, &nutrition_chart);
         self.nutrition = Some(Nutrition::from(info));
+    }
+
+    pub fn matches_filters(&self, filters: &DietaryFilters) -> bool {
+        if filters.preferences.is_empty() {
+            return true;
+        }
+
+        let mut searchable_text = String::new();
+        if let Some(name) = &self.name {
+            searchable_text.push_str(&name.to_lowercase());
+            searchable_text.push(' ');
+        }
+        if let Some(desc) = &self.description {
+            searchable_text.push_str(&desc.to_lowercase());
+            searchable_text.push(' ');
+        }
+        for diet in &self.diets {
+            searchable_text.push_str(&diet.to_lowercase());
+            searchable_text.push(' ');
+        }
+
+        for pref in &filters.preferences {
+            let matches = match pref {
+                DietaryPreference::Vegan => searchable_text.contains("vegan"),
+                DietaryPreference::Vegetarian => searchable_text.contains("vegetarian") || searchable_text.contains("vegan"),
+                DietaryPreference::GlutenFree => searchable_text.contains("gluten-free") || searchable_text.contains("gluten free"),
+                DietaryPreference::DairyFree => searchable_text.contains("dairy-free") || searchable_text.contains("dairy free"),
+                DietaryPreference::Keto => searchable_text.contains("keto"),
+                DietaryPreference::Paleo => searchable_text.contains("paleo"),
+            };
+            if !matches {
+                return false;
+            }
+        }
+        true
     }
 }
 
@@ -475,5 +511,34 @@ mod tests {
         let scaled_calories = recipe.nutrition.as_ref().unwrap().calories.unwrap();
         
         assert_eq!(scaled_calories, initial_calories * 2.0);
+    }
+
+    #[test]
+    fn test_recipe_matches_filters() {
+        let recipe = Recipe {
+            name: Some("Vegan Salad".into()),
+            diets: vec!["Vegan".into(), "Gluten-Free".into()],
+            ..Recipe::default()
+        };
+        
+        let filters_v = DietaryFilters {
+            preferences: vec![DietaryPreference::Vegan],
+        };
+        assert!(recipe.matches_filters(&filters_v));
+
+        let filters_gf = DietaryFilters {
+            preferences: vec![DietaryPreference::GlutenFree],
+        };
+        assert!(recipe.matches_filters(&filters_gf));
+
+        let filters_both = DietaryFilters {
+            preferences: vec![DietaryPreference::Vegan, DietaryPreference::GlutenFree],
+        };
+        assert!(recipe.matches_filters(&filters_both));
+
+        let filters_keto = DietaryFilters {
+            preferences: vec![DietaryPreference::Keto],
+        };
+        assert!(!recipe.matches_filters(&filters_keto));
     }
 }

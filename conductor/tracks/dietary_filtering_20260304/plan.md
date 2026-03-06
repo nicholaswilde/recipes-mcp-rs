@@ -5,12 +5,13 @@
 - [x] Update the tool schema for `manage_recipes`. (COMPLETED)
 
 ## Phase 2: Implementation
-- [ ] Update `search_recipes` to handle filtering after fetching results.
-- [ ] Update `scrape_recipes` to optionally filter out non-compliant recipes.
+- [x] Update `search_recipes` to handle filtering after fetching results. (COMPLETED)
+- [x] Update `scrape_recipes` to optionally filter out non-compliant recipes. (COMPLETED)
+
 
 ## Phase 3: Integration
-- [ ] Surface dietary metadata in the `formatter`.
-- [ ] Update the `search` and `scrape` tool handlers in `src/main.rs`.
+- [x] Surface dietary metadata in the `formatter`. (COMPLETED)
+- [~] Update the `search` and `scrape` tool handlers in `src/main.rs`.
 
 ## Phase 4: Testing
 - [ ] Test filtering behavior for `vegan` and `gluten-free`.
