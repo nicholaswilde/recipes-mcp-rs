@@ -454,4 +454,26 @@ mod tests {
         assert_eq!(weights[1].0, "granulated sugar");
         assert_eq!(weights[1].1, 198.0);
     }
+
+    #[test]
+    fn test_calculate_nutrition_with_scaling() {
+        let mut recipe = Recipe {
+            name: Some("Test".into()),
+            ingredients: vec!["1 cup granulated sugar".into()],
+            servings: Some(1),
+            ..Recipe::default()
+        };
+        let weight_chart = crate::conversion::data::WeightChart::new();
+        let nutrition_chart = crate::nutrition::NutritionChart::new();
+
+        recipe.calculate_nutrition(&weight_chart, &nutrition_chart);
+        let initial_calories = recipe.nutrition.as_ref().unwrap().calories.unwrap();
+        
+        // Scale to 2 servings
+        recipe.scale(2);
+        recipe.calculate_nutrition(&weight_chart, &nutrition_chart);
+        let scaled_calories = recipe.nutrition.as_ref().unwrap().calories.unwrap();
+        
+        assert_eq!(scaled_calories, initial_calories * 2.0);
+    }
 }

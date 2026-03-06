@@ -14,8 +14,8 @@
 - [x] Update the `formatter` to include a nutrition table. (COMPLETED)
 
 ## Phase 4: Testing
-- [ ] Unit test the calculation logic for a simple recipe.
-- [ ] Verify handling of multiple servings.
+- [x] Unit test the calculation logic for a simple recipe. (COMPLETED)
+- [~] Verify handling of multiple servings.
 
 ## Phase 5: Verification
 - [ ] Verify the estimated nutritional values are consistent with the ingredient weights.
