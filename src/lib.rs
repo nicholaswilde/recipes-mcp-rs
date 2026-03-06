@@ -1,5 +1,6 @@
 pub mod config;
 pub mod conversion;
+pub mod dietary;
 pub mod formatter;
 pub mod handler;
 pub mod nutrition;

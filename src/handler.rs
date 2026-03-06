@@ -3,7 +3,8 @@ use crate::conversion::data::WeightChart;
 use crate::formatter;
 use crate::scraper::{Recipe, scrape_recipes, ScraperError};
 use crate::search;
-use crate::nutrition::NutritionChart;
+use crate::nutrition::{NutritionChart, calculate_nutrition};
+use crate::dietary::{DietaryPreference, DietaryFilters};
 use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
@@ -19,6 +20,7 @@ pub struct ManageRecipesArgs {
     pub query: Option<String>,
     pub limit: Option<u32>,
     pub provider: Option<search::RecipeProvider>,
+    pub dietary_filters: Option<Vec<DietaryPreference>>,
 }
 
 pub async fn handle_request(
@@ -93,6 +95,14 @@ pub async fn handle_request(
                                         "type": "string",
                                         "enum": ["allrecipes", "foodnetwork", "seriouseats"],
                                         "description": "The recipe provider to search (optional for 'search' action, default 'allrecipes')"
+                                    },
+                                    "dietary_filters": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "enum": ["vegan", "vegetarian", "gluten-free", "dairy-free", "keto", "paleo"]
+                                        },
+                                        "description": "List of dietary preferences to filter by (optional)"
                                     }
                                 },
                                 "required": ["action"]
@@ -503,6 +513,10 @@ mod tests {
         let manage_recipes = tools.iter().find(|t| t["name"] == "manage_recipes").unwrap();
         let actions = manage_recipes["inputSchema"]["properties"]["action"]["enum"].as_array().unwrap();
         assert!(actions.iter().any(|a| a == "nutrition"));
+        
+        let props = manage_recipes["inputSchema"]["properties"].as_object().unwrap();
+        assert!(props.contains_key("dietary_filters"));
+        
         assert!(tools.iter().any(|t| t["name"] == "convert_ingredients"));
     }
 }

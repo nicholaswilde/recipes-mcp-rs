@@ -5,7 +5,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## Active Tracks
 
 ---
-## [ ] Track: Advanced Dietary Filtering
+## [~] Track: Advanced Dietary Filtering
 - Link: [dietary_filtering_20260304](./tracks/dietary_filtering_20260304/index.md)
 - Description: Integrate dietary metadata into search and formatting tools to support filtering for vegan, gluten-free, etc.
 

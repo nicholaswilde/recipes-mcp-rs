@@ -1,8 +1,8 @@
 # Implementation Plan: Advanced Dietary Filtering
 
 ## Phase 1: Preparation
-- [ ] Define the `DietaryFilters` struct and enums.
-- [ ] Update the tool schema for `manage_recipes`.
+- [x] Define the `DietaryFilters` struct and enums. (COMPLETED)
+- [~] Update the tool schema for `manage_recipes`.
 
 ## Phase 2: Implementation
 - [ ] Update `search_recipes` to handle filtering after fetching results.
