@@ -5,16 +5,16 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## Active Tracks
 
 ---
-## [x] Track: Multi-Provider Recipe Search
-- Link: [multi_provider_search_20260304](./tracks/multi_provider_search_20260304/index.md)
-- Description: Expand recipe search to support multiple providers (Food Network, Serious Eats, etc.) with provider selection.
-
----
 ## [ ] Track: Advanced Dietary Filtering
 - Link: [dietary_filtering_20260304](./tracks/dietary_filtering_20260304/index.md)
 - Description: Integrate dietary metadata into search and formatting tools to support filtering for vegan, gluten-free, etc.
 
 ## Completed Tracks
+
+---
+## [x] Track: Multi-Provider Recipe Search
+- Link: [multi_provider_search_20260304](./archive/multi_provider_search_20260304/index.md)
+- Description: Expand recipe search to support multiple providers (Food Network, Serious Eats, etc.) with provider selection.
 
 ---
 ## [x] Track: Recipe Nutrition Estimation
