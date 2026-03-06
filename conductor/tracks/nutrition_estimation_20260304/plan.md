@@ -4,7 +4,7 @@
 - [x] Define the `NutritionalInfo` struct for macro/micronutrients.
 - [x] Create an initial internal dataset of nutritional values for common ingredients (matching `WeightChart`). (COMPLETED)
 
-## Phase 2: Engine Implementation
+## Phase 2: Engine Implementation [checkpoint: c6f73b23dd418afb39a2cc5b2e15018567eec8d2]
 - [x] Implement a `calculate_nutrition` function that uses ingredient weights to calculate totals. (COMPLETED)
 - [x] Handle missing nutritional data gracefully. (COMPLETED)
 
