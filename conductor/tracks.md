@@ -5,7 +5,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## Active Tracks
 
 ---
-No active tracks.
+
+- [ ] **Track: Fix Search Provider Tests**
+*Link: [./tracks/fix_search_tests_20260305/](./tracks/fix_search_tests_20260305/)*
 
 ## Completed Tracks
 
