@@ -23,6 +23,7 @@ pub struct ManageRecipesArgs {
     pub dietary_filters: Option<Vec<DietaryPreference>>,
     pub admonition_types: Option<Vec<AdmonitionType>>,
     pub bypass_cache: Option<bool>,
+    pub target_system: Option<String>,
 }
 
 pub async fn handle_request(
@@ -118,6 +119,11 @@ pub async fn handle_request(
                                     "bypass_cache": {
                                         "type": "boolean",
                                         "description": "If true, bypass the cache and force a fresh request (optional, default: false)"
+                                    },
+                                    "target_system": {
+                                        "type": "string",
+                                        "enum": ["metric", "imperial"],
+                                        "description": "The desired unit system for volume conversion (optional)"
                                     }
                                 },
                                 "required": ["action"]
@@ -125,7 +131,7 @@ pub async fn handle_request(
                         },
                         {
                             "name": "convert_ingredients",
-                            "description": "Convert volumetric ingredient measurements to weight (grams)",
+                            "description": "Convert volumetric ingredient measurements to weight (grams) and/or between unit systems (Metric/Imperial)",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
@@ -133,6 +139,11 @@ pub async fn handle_request(
                                         "type": "array",
                                         "items": { "type": "string" },
                                         "description": "List of ingredient strings to convert (e.g., ['1 cup flour', '2 tbsp sugar'])"
+                                    },
+                                    "target_system": {
+                                        "type": "string",
+                                        "enum": ["metric", "imperial"],
+                                        "description": "The desired unit system for volume conversion (optional)"
                                     }
                                 },
                                 "required": ["ingredients"]
@@ -328,9 +339,22 @@ pub async fn handle_request(
                                 };
                             };
 
+                            let target_system = args.target_system.as_deref().and_then(|s| {
+                                match s.to_lowercase().as_str() {
+                                    "metric" => Some(crate::conversion::volume::UnitSystem::Metric),
+                                    "imperial" => Some(crate::conversion::volume::UnitSystem::Imperial),
+                                    _ => None,
+                                }
+                            });
+
                             for recipe in recipes_to_format.iter_mut() {
                                 if weight_conversion_enabled {
                                     recipe.convert_ingredients(&weight_chart);
+                                }
+                                if let Some(system) = target_system {
+                                    recipe.ingredients = recipe.ingredients.iter().map(|i| {
+                                        crate::conversion::volume::format_with_volume(i, system)
+                                    }).collect();
                                 }
                             }
 
@@ -510,8 +534,20 @@ pub async fn handle_request(
                         }
                     };
 
+                    let target_system = args_val["target_system"].as_str().and_then(|s| {
+                        match s.to_lowercase().as_str() {
+                            "metric" => Some(crate::conversion::volume::UnitSystem::Metric),
+                            "imperial" => Some(crate::conversion::volume::UnitSystem::Imperial),
+                            _ => None,
+                        }
+                    });
+
                     let converted: Vec<String> = ingredients.into_iter().map(|i| {
-                        crate::conversion::engine::format_with_weight(&i, &weight_chart)
+                        let mut res = crate::conversion::engine::format_with_weight(&i, &weight_chart);
+                        if let Some(system) = target_system {
+                            res = crate::conversion::volume::format_with_volume(&res, system);
+                        }
+                        res
                     }).collect();
 
                     Response {
