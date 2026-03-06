@@ -5,6 +5,7 @@ use crate::dietary::{DietaryPreference, DietaryFilters};
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use thiserror::Error;
 use url::Url;
 
@@ -298,7 +299,15 @@ pub async fn scrape_recipe(
     url_str: &str,
     chart: &crate::conversion::data::WeightChart,
     weight_conversion: bool,
+    cache: Option<Arc<dyn crate::cache::RecipeCache>>,
 ) -> Result<Recipe, ScraperError> {
+    if let Some(c) = &cache {
+        if let Some(recipe) = c.get_recipe(url_str).await {
+            tracing::info!("Cache hit for recipe: {}", url_str);
+            return Ok(recipe);
+        }
+    }
+
     // Basic validation
     Url::parse(url_str).map_err(|e| ScraperError::InvalidUrl(e.to_string()))?;
 
@@ -320,6 +329,9 @@ pub async fn scrape_recipe(
                 tracing::info!("Primary scraper (rust-recipe) succeeded for {}", url_str);
                 if weight_conversion {
                     recipe.convert_ingredients(chart);
+                }
+                if let Some(c) = &cache {
+                    c.set_recipe(url_str, recipe.clone(), std::time::Duration::from_secs(7 * 24 * 3600)).await;
                 }
                 return Ok(recipe);
             }
@@ -360,8 +372,10 @@ pub async fn scrape_recipe(
         .await
         .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
 
-    let document = Html::parse_document(&html);
-    let admonitions = parse_admonitions_from_html(&document);
+    let admonitions = {
+        let document = Html::parse_document(&html);
+        parse_admonitions_from_html(&document)
+    };
 
     // Correct usage of Scrape and Extract traits
     let schema_entries = SchemaOrgEntry::scrape_html(&html);
@@ -384,6 +398,9 @@ pub async fn scrape_recipe(
             tracing::info!("Fallback scraper succeeded for {}", url_str);
             // If the primary scraper (rust-recipe) got some admonitions, but failed overall, we might want to merge them.
             // For now, just use the ones from the fallback document.
+            if let Some(c) = &cache {
+                c.set_recipe(url_str, recipe.clone(), std::time::Duration::from_secs(7 * 24 * 3600)).await;
+            }
             return Ok(recipe);
         }
     }
@@ -406,10 +423,11 @@ pub async fn scrape_recipes(
     urls: Vec<String>,
     chart: &crate::conversion::data::WeightChart,
     weight_conversion: bool,
+    cache: Option<Arc<dyn crate::cache::RecipeCache>>,
 ) -> HashMap<String, Result<Recipe, ScraperError>> {
     let mut results = HashMap::new();
     for url in urls {
-        results.insert(url.clone(), scrape_recipe(&url, chart, weight_conversion).await);
+        results.insert(url.clone(), scrape_recipe(&url, chart, weight_conversion, cache.clone()).await);
     }
     results
 }
@@ -429,7 +447,7 @@ mod tests {
     #[tokio::test]
     async fn test_invalid_url() {
         let chart = crate::conversion::data::WeightChart::new();
-        let result = scrape_recipe("not-a-url", &chart, true).await;
+        let result = scrape_recipe("not-a-url", &chart, true, None).await;
         assert!(matches!(result, Err(ScraperError::InvalidUrl(_))));
     }
 
@@ -437,10 +455,29 @@ mod tests {
     async fn test_scrape_recipes_bulk() {
         let chart = crate::conversion::data::WeightChart::new();
         let urls = vec!["not-a-url".to_string(), "invalid://url".to_string()];
-        let results = scrape_recipes(urls, &chart, true).await;
+        let results = scrape_recipes(urls, &chart, true, None).await;
         assert_eq!(results.len(), 2);
         assert!(results.get("not-a-url").unwrap().is_err());
         assert!(results.get("invalid://url").unwrap().is_err());
+    }
+
+    #[tokio::test]
+    async fn test_scrape_recipe_caching() {
+        use tempfile::tempdir;
+        let _ = tracing_subscriber::fmt().with_max_level(tracing::Level::INFO).with_test_writer().try_init();
+        let dir = tempdir().unwrap();
+        let cache = Arc::new(crate::cache::FileRecipeCache::new(dir.path().to_path_buf()));
+        let chart = crate::conversion::data::WeightChart::new();
+        
+        let url = "https://www.food.com/recipe/classic-lasagna-11732";
+        
+        // First call - should populate cache
+        let res1 = scrape_recipe(url, &chart, true, Some(cache.clone())).await.unwrap();
+        
+        // Second call - should hit cache
+        let res2 = scrape_recipe(url, &chart, true, Some(cache)).await.unwrap();
+        
+        assert_eq!(res1, res2);
     }
 
     #[test]

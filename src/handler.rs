@@ -167,7 +167,7 @@ pub async fn handle_request(
                     match args.action.as_str() {
                         "scrape" => {
                             let urls = args.urls.unwrap_or_default();
-                            let results = scrape_recipes(urls, &weight_chart, weight_conversion_enabled).await;
+                            let results = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, None).await;
                             
                             // Apply filtering
                             let filtered_results: HashMap<String, Result<Recipe, ScraperError>> = results
@@ -221,7 +221,7 @@ pub async fn handle_request(
                             }
 
                             let mut recipes_to_scale: Vec<Recipe> = if let Some(urls) = args.urls {
-                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled).await;
+                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, None).await;
                                 results
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
@@ -281,7 +281,7 @@ pub async fn handle_request(
                         "format" => {
                             let format_type = args.format_type.unwrap_or_else(|| "markdown".into());
                             let mut recipes_to_format: Vec<Recipe> = if let Some(urls) = args.urls {
-                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled).await;
+                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, None).await;
                                 results
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
@@ -409,7 +409,7 @@ pub async fn handle_request(
                         }
                         "nutrition" => {
                             let recipes_to_analyze: Vec<Recipe> = if let Some(urls) = args.urls {
-                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled).await;
+                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, None).await;
                                 results
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
