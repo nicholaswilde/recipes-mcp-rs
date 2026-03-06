@@ -15,7 +15,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 - Description: Integrate dietary metadata into search and formatting tools to support filtering for vegan, gluten-free, etc.
 
 ---
-## [ ] Track: Recipe Nutrition Estimation
+## [~] Track: Recipe Nutrition Estimation
 - Link: [nutrition_estimation_20260304](./tracks/nutrition_estimation_20260304/index.md)
 - Description: Estimate nutritional values for recipes by analyzing ingredient lists and weights.
 

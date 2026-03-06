@@ -3,6 +3,7 @@ use mcp_sdk_rs::protocol::Request;
 use recipes_mcp_rs::config::{AppConfig, Args};
 use recipes_mcp_rs::conversion::data::WeightChart;
 use recipes_mcp_rs::handler::handle_request;
+use recipes_mcp_rs::transport::http::{run_server, ServerState};
 use std::io::{BufRead, Write};
 use std::sync::Arc;
 use tracing::{Level, error, info};
@@ -36,31 +37,44 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let weight_chart = Arc::new(WeightChart::new());
     let weight_conversion_enabled = config.weight_conversion;
 
-    let stdin = std::io::stdin();
-    let mut stdout = std::io::stdout();
-
-    for line in stdin.lock().lines() {
-        let line = match line {
-            Ok(l) => l,
-            Err(_) => break,
-        };
-
-        if line.trim().is_empty() {
-            continue;
+    match config.transport.to_lowercase().as_str() {
+        "http" => {
+            let state = ServerState {
+                weight_chart,
+                weight_conversion_enabled,
+                port: config.port,
+            };
+            run_server(state).await?;
         }
+        "stdio" | _ => {
+            info!("Running in stdio mode");
+            let stdin = std::io::stdin();
+            let mut stdout = std::io::stdout();
 
-        match serde_json::from_str::<Request>(&line) {
-            Ok(req) => {
-                let response = handle_request(req, weight_chart.clone(), weight_conversion_enabled).await;
-                let response_json = serde_json::to_string(&response).unwrap();
-                if let Err(e) = writeln!(stdout, "{}", response_json) {
-                    error!("Failed to write to stdout: {}", e);
-                    break;
+            for line in stdin.lock().lines() {
+                let line = match line {
+                    Ok(l) => l,
+                    Err(_) => break,
+                };
+
+                if line.trim().is_empty() {
+                    continue;
                 }
-                let _ = stdout.flush();
-            }
-            Err(e) => {
-                error!("Failed to parse request: {}", e);
+
+                match serde_json::from_str::<Request>(&line) {
+                    Ok(req) => {
+                        let response = handle_request(req, weight_chart.clone(), weight_conversion_enabled).await;
+                        let response_json = serde_json::to_string(&response).unwrap();
+                        if let Err(e) = writeln!(stdout, "{}", response_json) {
+                            error!("Failed to write to stdout: {}", e);
+                            break;
+                        }
+                        let _ = stdout.flush();
+                    }
+                    Err(e) => {
+                        error!("Failed to parse request: {}", e);
+                    }
+                }
             }
         }
     }

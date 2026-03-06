@@ -410,3 +410,41 @@ pub async fn handle_request(
         },
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mcp_sdk_rs::protocol::RequestId;
+
+    #[tokio::test]
+    async fn test_handle_initialize() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "initialize".into(),
+            params: None,
+        };
+        let resp = handle_request(req, chart, true).await;
+        assert_eq!(resp.id, RequestId::Number(1));
+        let result = resp.result.unwrap();
+        assert_eq!(result["protocolVersion"], "2024-11-05");
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_list() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/list".into(),
+            params: None,
+        };
+        let resp = handle_request(req, chart, true).await;
+        assert_eq!(resp.id, RequestId::Number(1));
+        let result = resp.result.unwrap();
+        let tools = result["tools"].as_array().unwrap();
+        assert!(tools.iter().any(|t| t["name"] == "manage_recipes"));
+        assert!(tools.iter().any(|t| t["name"] == "convert_ingredients"));
+    }
+}

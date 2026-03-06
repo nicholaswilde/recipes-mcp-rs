@@ -1,8 +1,8 @@
 # Implementation Plan: Recipe Nutrition Estimation
 
 ## Phase 1: Data Modeling
-- [ ] Define the `NutritionalInfo` struct for macro/micronutrients.
-- [ ] Create an initial internal dataset of nutritional values for common ingredients (matching `WeightChart`).
+- [x] Define the `NutritionalInfo` struct for macro/micronutrients.
+- [x] Create an initial internal dataset of nutritional values for common ingredients (matching `WeightChart`). (COMPLETED)
 
 ## Phase 2: Engine Implementation
 - [ ] Implement a `calculate_nutrition` function that uses ingredient weights to calculate totals.
