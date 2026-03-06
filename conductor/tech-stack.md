@@ -8,6 +8,7 @@
 - **rust-recipe:** To leverage existing recipe parsing and data structures.
 - **recipe-scraper:** For extracting recipe information from diverse web sources.
 - **scraper:** For HTML parsing and CSS selectors (used for King Arthur weight chart scraping).
+- **async-trait:** For defining asynchronous traits (e.g., RecipeSearchProvider).
 
 ## Configuration & Data Formats
 - **Serde:** For seamless serialization and deserialization of all data structures.
