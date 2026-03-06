@@ -1,8 +1,8 @@
 # Implementation Plan: HTTP and SSE Transport Mode Support
 
 ## Phase 1: Preparation
-- [ ] Add `axum`, `tower-http`, and `futures` to `Cargo.toml`.
-- [ ] Update `Args` in `src/config.rs` to include a `--transport` flag (default: `stdio`) and optional `--port` (default: `3000`).
+- [x] Add `axum`, `tower-http`, and `futures` to `Cargo.toml`.
+- [x] Update `Args` in `src/config.rs` to include a `--transport` flag (default: `stdio`) and optional `--port` (default: `3000`).
 
 ## Phase 2: Refactoring
 - [ ] Abstract the request handling logic in `src/main.rs` into a standalone function or module if needed to be reused between stdio and HTTP.
