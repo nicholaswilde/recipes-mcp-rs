@@ -6,7 +6,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Recipe Admonition Extraction (Tips & Notes)**
+- [x] **Track: Recipe Admonition Extraction (Tips & Notes)**
 *Link: [./tracks/recipe_admonitions_20260305/](./tracks/recipe_admonitions_20260305/)*
 
 ## Completed Tracks
