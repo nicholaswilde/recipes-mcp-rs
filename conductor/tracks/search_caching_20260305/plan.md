@@ -20,9 +20,9 @@
 - [x] Task: Conductor - User Manual Verification 'Scrape Caching Integration'
 
 ## Phase 4: Persistence & TTL Management
-- [ ] Task: Implement logic to handle expired entries (TTL).
-- [ ] Task: Implement cache directory management (creation and initialization).
-- [ ] Task: Conductor - User Manual Verification 'Persistence & TTL Management'
+- [x] Task: Implement logic to handle expired entries (TTL).
+- [x] Task: Implement cache directory management (creation and initialization).
+- [~] Task: Conductor - User Manual Verification 'Persistence & TTL Management'
 
 ## Phase 5: Configuration & Tool Integration
 - [ ] Task: Add caching options to `src/config.rs`.

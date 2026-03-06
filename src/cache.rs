@@ -37,6 +37,8 @@ pub trait RecipeCache: Send + Sync {
     
     async fn get_recipe(&self, url: &str) -> Option<Recipe>;
     async fn set_recipe(&self, url: &str, recipe: Recipe, ttl: Duration);
+
+    async fn cleanup_expired(&self);
 }
 
 use std::path::PathBuf;
@@ -125,6 +127,26 @@ impl RecipeCache for FileRecipeCache {
             let _ = fs::write(path, content);
         }
     }
+
+    async fn cleanup_expired(&self) {
+        if let Ok(entries) = fs::read_dir(&self.cache_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("json") {
+                    if let Ok(content) = fs::read_to_string(&path) {
+                        // We need to try deserializing as either SearchResult or Recipe entry
+                        // Or we can just check the timestamp/ttl if we had a generic header
+                        // For simplicity, we'll try to deserialize as CacheEntry<serde_json::Value>
+                        if let Ok(entry) = serde_json::from_str::<CacheEntry<serde_json::Value>>(&content) {
+                            if entry.is_expired() {
+                                let _ = fs::remove_file(path);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -195,5 +217,26 @@ mod tests {
         
         // Should be None due to expiration
         assert!(cache.get_recipe(url).await.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_cleanup_expired() {
+        let dir = tempdir().unwrap();
+        let cache = FileRecipeCache::new(dir.path().to_path_buf());
+        
+        // Set one valid and one expired
+        cache.set_recipe("http://example.com/valid", Recipe::default(), Duration::from_secs(60)).await;
+        cache.set_recipe("http://example.com/expired", Recipe::default(), Duration::from_secs(0)).await;
+        
+        // Verify both files exist
+        let count = fs::read_dir(dir.path()).unwrap().count();
+        assert_eq!(count, 2);
+        
+        // Cleanup
+        cache.cleanup_expired().await;
+        
+        // Verify only one file remains
+        let count = fs::read_dir(dir.path()).unwrap().count();
+        assert_eq!(count, 1);
     }
 }
