@@ -6,12 +6,12 @@
 - [x] Task: Conductor - User Manual Verification 'Data Modeling' (Protocol in workflow.md) (COMPLETED)
 
 ## Phase 2: Scraper Enhancement
-- [ ] Task: Update `RecipeSearchProvider` logic or tiered scraping to detect admonition sections in HTML.
-- [ ] Task: Implement TDD for admonition parsing:
-    - [ ] Sub-task: Write failing unit tests with mock HTML containing tips and notes.
-    - [ ] Sub-task: Implement the parsing logic to extract text from detected containers.
-    - [ ] Sub-task: Verify tests pass.
-- [ ] Task: Conductor - User Manual Verification 'Scraper Enhancement' (Protocol in workflow.md)
+- [x] Task: Update `RecipeSearchProvider` logic or tiered scraping to detect admonition sections in HTML. (COMPLETED)
+- [x] Task: Implement TDD for admonition parsing: (COMPLETED)
+    - [x] Sub-task: Write failing unit tests with mock HTML containing tips and notes. (COMPLETED)
+    - [x] Sub-task: Implement the parsing logic to extract text from detected containers. (COMPLETED)
+    - [x] Sub-task: Verify tests pass. (COMPLETED)
+- [x] Task: Conductor - User Manual Verification 'Scraper Enhancement' (Protocol in workflow.md) (COMPLETED)
 
 ## Phase 3: Tool & Handler Integration
 - [ ] Task: Update `ManageRecipesArgs` in `src/handler.rs` to include `admonition_types`.

@@ -2,6 +2,7 @@ use recipe_scraper::{Extract, SchemaOrgEntry, SchemaOrgRecipe, Scrape};
 use rust_recipe::{NutritionInformation, RecipeInformationProvider};
 use crate::nutrition::{NutritionalInfo, NutritionChart, calculate_nutrition};
 use crate::dietary::{DietaryPreference, DietaryFilters};
+use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
@@ -252,6 +253,45 @@ impl Recipe {
     }
 }
 
+pub fn parse_admonitions_from_html(document: &Html) -> Vec<Admonition> {
+    let mut admonitions = Vec::new();
+
+    // Selectors for common admonition patterns
+    let patterns = vec![
+        (AdmonitionType::Note, vec![".recipe-notes", ".notes", ".recipe-note", "[class*='notes']"]),
+        (AdmonitionType::Tip, vec![".recipe-tips", ".tips", ".recipe-tip", "[class*='tips']"]),
+        (AdmonitionType::Variation, vec![".recipe-variations", ".variations", ".recipe-variation", "[class*='variations']"]),
+    ];
+
+    for (kind, selectors) in patterns {
+        for selector_str in selectors {
+            if let Ok(selector) = Selector::parse(selector_str) {
+                for element in document.select(&selector) {
+                    let content = element
+                        .text()
+                        .collect::<Vec<_>>()
+                        .join(" ");
+                    
+                    let normalized_content = content
+                        .split_whitespace()
+                        .collect::<Vec<_>>()
+                        .join(" ");
+                    
+                    // Filter out short or repetitive content
+                    if normalized_content.len() > 5 && !admonitions.iter().any(|a: &Admonition| a.content == normalized_content) {
+                        admonitions.push(Admonition {
+                            kind,
+                            content: normalized_content,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    admonitions
+}
+
 pub async fn scrape_recipe(
     url_str: &str,
     chart: &crate::conversion::data::WeightChart,
@@ -318,6 +358,9 @@ pub async fn scrape_recipe(
         .await
         .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
 
+    let document = Html::parse_document(&html);
+    let admonitions = parse_admonitions_from_html(&document);
+
     // Correct usage of Scrape and Extract traits
     let schema_entries = SchemaOrgEntry::scrape_html(&html);
     let recipes: Vec<Recipe> = schema_entries
@@ -328,6 +371,7 @@ pub async fn scrape_recipe(
             if weight_conversion {
                 recipe.convert_ingredients(chart);
             }
+            recipe.admonitions = admonitions.clone();
             recipe
         })
         .collect();
@@ -336,15 +380,18 @@ pub async fn scrape_recipe(
     for recipe in recipes {
         if !recipe.ingredients.is_empty() && !recipe.instructions.is_empty() {
             tracing::info!("Fallback scraper succeeded for {}", url_str);
+            // If the primary scraper (rust-recipe) got some admonitions, but failed overall, we might want to merge them.
+            // For now, just use the ones from the fallback document.
             return Ok(recipe);
         }
     }
 
-    if let Some(r) = recipe.filter(|r| !r.ingredients.is_empty()) {
+    if let Some(mut r) = recipe.filter(|r| !r.ingredients.is_empty()) {
         tracing::info!(
             "Returning incomplete primary scraper result for {}",
             url_str
         );
+        r.admonitions = admonitions;
         return Ok(r);
     }
 
@@ -557,6 +604,27 @@ mod tests {
             preferences: vec![DietaryPreference::Keto],
         };
         assert!(!recipe.matches_filters(&filters_keto));
+    }
+
+    #[test]
+    fn test_parse_admonitions() {
+        let html = r#"
+            <div class="recipe-notes">
+                <h3>Notes</h3>
+                <p>Use cold butter for flakiness.</p>
+            </div>
+            <div class="recipe-variation">
+                <p>Try adding nuts for extra crunch.</p>
+            </div>
+        "#;
+        let document = scraper::Html::parse_document(html);
+        let admonitions = parse_admonitions_from_html(&document);
+        
+        assert_eq!(admonitions.len(), 2);
+        assert_eq!(admonitions[0].kind, AdmonitionType::Note);
+        assert_eq!(admonitions[0].content, "Notes Use cold butter for flakiness.");
+        assert_eq!(admonitions[1].kind, AdmonitionType::Variation);
+        assert_eq!(admonitions[1].content, "Try adding nuts for extra crunch.");
     }
 
     #[test]
