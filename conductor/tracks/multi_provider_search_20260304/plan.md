@@ -1,8 +1,8 @@
 # Implementation Plan: Multi-Provider Recipe Search
 
-## Phase 1: Preparation
+## Phase 1: Preparation [checkpoint: 92839d9333f34f392d54fbd3f3bd0ae3a0cab3dc]
 - [x] Refactor `src/search.rs` to support multiple provider backends. (COMPLETED)
-- [~] Define a `RecipeProvider` trait for consistency.
+- [x] Define a `RecipeProvider` trait for consistency. (COMPLETED)
 
 ## Phase 2: Implementation
 - [ ] Implement `FoodNetworkProvider`.
