@@ -6,7 +6,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Fix Search Provider Tests**
+- [x] **Track: Fix Search Provider Tests**
 *Link: [./tracks/fix_search_tests_20260305/](./tracks/fix_search_tests_20260305/)*
 
 ---

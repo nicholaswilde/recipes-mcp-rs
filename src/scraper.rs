@@ -15,6 +15,8 @@ pub enum ScraperError {
     InvalidUrl(String),
     #[error("failed to scrape recipe: {0}")]
     ScrapeFailed(String),
+    #[error("request blocked by provider: {0}")]
+    RequestBlocked(String),
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
