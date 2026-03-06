@@ -5,11 +5,14 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## Active Tracks
 
 ---
-
-- [x] **Track: Recipe Admonition Extraction (Tips & Notes)**
-*Link: [./tracks/recipe_admonitions_20260305/](./tracks/recipe_admonitions_20260305/)*
+No active tracks.
 
 ## Completed Tracks
+
+---
+## [x] Track: Recipe Admonition Extraction (Tips & Notes)
+- Link: [recipe_admonitions_20260305](./archive/recipe_admonitions_20260305/index.md)
+- Description: Have the ability to retrieve admonitions from recipe pages such as tips or notes
 
 ---
 ## [x] Track: Advanced Dietary Filtering
