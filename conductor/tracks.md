@@ -6,11 +6,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Metric/Imperial Volume Conversion**
-*Link: [./tracks/volume_conversion_20260305/](./tracks/volume_conversion_20260305/)*
-
----
-
 - [ ] **Track: Cooklang Export Support**
 *Link: [./tracks/cooklang_export_20260305/](./tracks/cooklang_export_20260305/)*
 
