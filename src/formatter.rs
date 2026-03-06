@@ -89,9 +89,162 @@ pub fn to_markdown(recipe: &Recipe) -> String {
     md.trim().to_string()
 }
 
+pub fn to_cooklang_ingredient(s: &str) -> String {
+    if let Some(vol) = crate::conversion::parser::parse_ingredient(s) {
+        let name = if vol.ingredient.contains(' ') {
+            format!("{{{}}}", vol.ingredient)
+        } else {
+            vol.ingredient
+        };
+        return format!("@{}{{{}%{}}}", name, vol.value, vol.unit);
+    }
+
+    // Fallback: if no unit/amount found, treat the whole thing as ingredient name
+    if s.contains(' ') {
+        format!("@{{{}}}", s.trim())
+    } else {
+        format!("@{}", s.trim())
+    }
+}
+
+pub fn to_cooklang(recipe: &Recipe) -> String {
+    let mut cook = String::new();
+
+    if let Some(name) = &recipe.name {
+        cook.push_str(&format!(">> title: {}\n", name));
+    }
+
+    if let Some(desc) = &recipe.description {
+        cook.push_str(&format!(">> description: {}\n", desc));
+    }
+
+    if let Some(servings) = recipe.servings {
+        cook.push_str(&format!(">> servings: {}\n", servings));
+    }
+
+    if let Some(prep) = &recipe.prep_time {
+        cook.push_str(&format!(">> prep_time: {}\n", prep));
+    }
+
+    if let Some(cook_time) = &recipe.cook_time {
+        cook.push_str(&format!(">> cook_time: {}\n", cook_time));
+    }
+
+    // Pre-calculate ingredient mappings for replacement
+    let mut ingredient_map = Vec::new();
+    for ing_str in &recipe.ingredients {
+        if let Some(vol) = crate::conversion::parser::parse_ingredient(ing_str) {
+            let cook_ing = to_cooklang_ingredient(ing_str);
+            ingredient_map.push((vol.ingredient, cook_ing));
+        } else {
+            // If it doesn't parse as amount/unit/name, use the whole string
+            let cook_ing = to_cooklang_ingredient(ing_str);
+            ingredient_map.push((ing_str.clone(), cook_ing));
+        }
+    }
+
+    // Sort by name length descending to match longest ingredients first
+    ingredient_map.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
+
+    if !recipe.instructions.is_empty() {
+        cook.push('\n');
+        
+        // Timer regex: e.g., "10 minutes", "1 hour", "5 mins"
+        let timer_re = regex::Regex::new(r"(?i)(\d+)\s*(minutes?|mins?|hours?|hrs?)").unwrap();
+
+        for step in &recipe.instructions {
+            let mut formatted_step = step.clone();
+            
+            // Match ingredients
+            for (name, cook_ing) in &ingredient_map {
+                let re = regex::Regex::new(&format!(r"(?i)\b{}\b", regex::escape(name))).unwrap();
+                formatted_step = re.replace_all(&formatted_step, cook_ing).to_string();
+            }
+
+            // Match timers
+            formatted_step = timer_re.replace_all(&formatted_step, |caps: &regex::Captures| {
+                format!("~{{{}%{}}}", &caps[1], &caps[2])
+            }).to_string();
+
+            cook.push_str(&formatted_step);
+            cook.push_str("\n\n");
+        }
+    }
+
+    // Add ingredients as comments if they aren't used in instructions
+    // To be safer, we'll just list them all as comments for now
+    if !recipe.ingredients.is_empty() {
+        cook.push_str("-- Ingredients:\n");
+        for ingredient in &recipe.ingredients {
+            cook.push_str(&format!("-- {}\n", ingredient));
+        }
+    }
+
+    cook.trim().to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_to_cooklang_ingredient() {
+        assert_eq!(to_cooklang_ingredient("1 cup water"), "@water{1%cup}");
+        assert_eq!(to_cooklang_ingredient("250ml milk"), "@milk{250%ml}");
+        assert_eq!(to_cooklang_ingredient("1/2 tbsp olive oil"), "@{olive oil}{0.5%tbsp}");
+        assert_eq!(to_cooklang_ingredient("salt to taste"), "@{salt to taste}");
+        assert_eq!(to_cooklang_ingredient("Salt"), "@Salt");
+    }
+
+    #[test]
+    fn test_to_cooklang_with_timers() {
+        let recipe = Recipe {
+            instructions: vec!["Let it rest for 10 minutes.".into()],
+            ..Recipe::default()
+        };
+        let cook = to_cooklang(&recipe);
+        assert!(cook.contains("Let it rest for ~{10%minutes}."));
+    }
+
+    #[test]
+    fn test_to_cooklang_with_matching() {
+        let recipe = Recipe {
+            name: Some("Test Recipe".into()),
+            ingredients: vec![
+                "1 cup water".into(),
+                "2 tbsp olive oil".into(),
+                "salt to taste".into(),
+            ],
+            instructions: vec![
+                "Boil the water in a pot.".into(),
+                "Add the olive oil and salt to taste.".into(),
+            ],
+            ..Recipe::default()
+        };
+
+        let cook = to_cooklang(&recipe);
+        assert!(cook.contains("Boil the @water{1%cup} in a pot."));
+        assert!(cook.contains("Add the @{olive oil}{2%tbsp} and @{salt to taste}."));
+    }
+
+    #[test]
+    fn test_to_cooklang_basic() {
+        let recipe = Recipe {
+            name: Some("Test Recipe".into()),
+            description: Some("A test description".into()),
+            ingredients: vec!["1 cup water".into()],
+            instructions: vec!["Boil water in a pot.".into()],
+            servings: Some(4),
+            ..Recipe::default()
+        };
+
+        let cook = to_cooklang(&recipe);
+        assert!(cook.contains(">> title: Test Recipe"));
+        assert!(cook.contains(">> description: A test description"));
+        assert!(cook.contains(">> servings: 4"));
+        assert!(cook.contains("Boil @water{1%cup} in a pot."));
+        assert!(cook.contains("-- 1 cup water"));
+    }
 
     #[test]
     fn test_to_markdown_complete() {

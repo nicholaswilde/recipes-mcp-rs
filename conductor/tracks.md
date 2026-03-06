@@ -6,7 +6,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Cooklang Export Support**
+- [x] **Track: Cooklang Export Support**
 *Link: [./tracks/cooklang_export_20260305/](./tracks/cooklang_export_20260305/)*
 
 ---

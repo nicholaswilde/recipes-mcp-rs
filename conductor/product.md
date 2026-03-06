@@ -18,7 +18,7 @@ To provide a robust, automated interface for importing and parsing recipes from 
 - **Bulk Processing:** Supports simultaneous scraping and parsing of multiple URLs in a single request for improved efficiency.
 - **Recipe Scaling:** Allows users to adjust servings for any recipe, automatically scaling ingredient quantities while maintaining formatting.
 - **Volumetric to Weight Conversion:** Automatically converts volumetric measurements (cups, tbsp, tsp) to gram weights using the King Arthur ingredient weight chart for improved baking accuracy.
-- **Multi-Format Export:** Enables exporting scraped recipes into various human-readable formats, such as Markdown, for seamless integration into personal knowledge bases.
+- **Multi-Format Export:** Enables exporting scraped recipes into various human-readable formats, such as Markdown and Cooklang, for seamless integration into personal knowledge bases.
 - **Recipe Discovery:** Integrated search functionality allows users to find recipe URLs based on key terms from supported providers (AllRecipes, Food Network, Serious Eats, TheMealDB).
 - **Flexible Transport Modes:** Supports both `stdio` and `HTTP/SSE` (Server-Sent Events) for seamless integration with a wide variety of MCP clients and host environments.
 - **Metric/Imperial Volume Conversion:** Supports seamless conversion between Metric and Imperial units for liquid and dry volume measurements.

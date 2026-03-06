@@ -84,7 +84,7 @@ pub async fn handle_request(
                                     },
                                     "format_type": {
                                         "type": "string",
-                                        "enum": ["markdown", "json"],
+                                        "enum": ["markdown", "json", "cooklang"],
                                         "description": "The desired output format (required for 'format' action, defaults to 'markdown')"
                                     },
                                     "query": {
@@ -365,6 +365,11 @@ pub async fn handle_request(
                                     .collect::<Vec<String>>()
                                     .join("\n\n---\n\n"),
                                 "json" => serde_json::to_string_pretty(&recipes_to_format).unwrap(),
+                                "cooklang" => recipes_to_format
+                                    .iter()
+                                    .map(formatter::to_cooklang)
+                                    .collect::<Vec<String>>()
+                                    .join("\n\n---\n\n"),
                                 _ => {
                                     return Response {
                                         jsonrpc: JSONRPC_VERSION.into(),

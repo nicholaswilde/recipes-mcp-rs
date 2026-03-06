@@ -15,6 +15,7 @@
 - **TOML:** Support for configuration files in `.toml` format.
 - **YAML:** Support for configuration files in `.yaml` or `.yml` format.
 - **JSON:** Support for configuration files in `.json` format.
+- **Cooklang:** Support for recipe export in the `.cook` format.
 
 ## CLI & Environment Variables
 - **Clap:** For robust command-line argument parsing and help generation.
