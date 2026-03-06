@@ -8,7 +8,11 @@ pub fn to_markdown(recipe: &Recipe) -> String {
     }
 
     if let Some(image_url) = &recipe.image_url {
-        md.push_str(&format!("![{}]({})\n\n", recipe.name.as_deref().unwrap_or("Recipe Image"), image_url));
+        md.push_str(&format!(
+            "![{}]({})\n\n",
+            recipe.name.as_deref().unwrap_or("Recipe Image"),
+            image_url
+        ));
     }
 
     if let Some(desc) = &recipe.description {
@@ -148,13 +152,13 @@ pub fn to_cooklang(recipe: &Recipe) -> String {
 
     if !recipe.instructions.is_empty() {
         cook.push('\n');
-        
+
         // Timer regex: e.g., "10 minutes", "1 hour", "5 mins"
         let timer_re = regex::Regex::new(r"(?i)(\d+)\s*(minutes?|mins?|hours?|hrs?)").unwrap();
 
         for step in &recipe.instructions {
             let mut formatted_step = step.clone();
-            
+
             // Match ingredients
             for (name, cook_ing) in &ingredient_map {
                 let re = regex::Regex::new(&format!(r"(?i)\b{}\b", regex::escape(name))).unwrap();
@@ -162,9 +166,11 @@ pub fn to_cooklang(recipe: &Recipe) -> String {
             }
 
             // Match timers
-            formatted_step = timer_re.replace_all(&formatted_step, |caps: &regex::Captures| {
-                format!("~{{{}%{}}}", &caps[1], &caps[2])
-            }).to_string();
+            formatted_step = timer_re
+                .replace_all(&formatted_step, |caps: &regex::Captures| {
+                    format!("~{{{}%{}}}", &caps[1], &caps[2])
+                })
+                .to_string();
 
             cook.push_str(&formatted_step);
             cook.push_str("\n\n");
@@ -191,7 +197,10 @@ mod tests {
     fn test_to_cooklang_ingredient() {
         assert_eq!(to_cooklang_ingredient("1 cup water"), "@water{1%cup}");
         assert_eq!(to_cooklang_ingredient("250ml milk"), "@milk{250%ml}");
-        assert_eq!(to_cooklang_ingredient("1/2 tbsp olive oil"), "@{olive oil}{0.5%tbsp}");
+        assert_eq!(
+            to_cooklang_ingredient("1/2 tbsp olive oil"),
+            "@{olive oil}{0.5%tbsp}"
+        );
         assert_eq!(to_cooklang_ingredient("salt to taste"), "@{salt to taste}");
         assert_eq!(to_cooklang_ingredient("Salt"), "@Salt");
     }

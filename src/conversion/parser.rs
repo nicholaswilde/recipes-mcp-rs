@@ -49,7 +49,7 @@ pub fn parse_ingredient(s: &str) -> Option<VolumetricAmount> {
         let unit = caps[2].to_lowercase();
         let rest = caps[3].to_string();
         if valid_units.contains(&unit.as_str()) {
-             return Some(VolumetricAmount {
+            return Some(VolumetricAmount {
                 value,
                 unit,
                 ingredient: clean_ingredient(&rest),
@@ -60,7 +60,11 @@ pub fn parse_ingredient(s: &str) -> Option<VolumetricAmount> {
     // Try multi-word units first
     for unit in valid_units.iter() {
         if unit.contains(' ') {
-            let re = Regex::new(&format!(r"^(\d+\s+\d+/\d+|\d+/\d+|\d*\.?\d+)\s+({})\s+(.*)$", unit)).unwrap();
+            let re = Regex::new(&format!(
+                r"^(\d+\s+\d+/\d+|\d+/\d+|\d*\.?\d+)\s+({})\s+(.*)$",
+                unit
+            ))
+            .unwrap();
             if let Some(caps) = re.captures(s) {
                 let val_str = &caps[1];
                 let value = parse_numeric_value(val_str)?;
@@ -91,18 +95,10 @@ pub fn parse_ingredient(s: &str) -> Option<VolumetricAmount> {
     } else if let Some(caps) = re_frac.captures(s) {
         let num: f64 = caps[1].parse().unwrap_or(0.0);
         let den: f64 = caps[2].parse().unwrap_or(1.0);
-        (
-            num / den,
-            Some(caps[3].to_string()),
-            caps[4].to_string(),
-        )
+        (num / den, Some(caps[3].to_string()), caps[4].to_string())
     } else if let Some(caps) = re_num.captures(s) {
         let num: f64 = caps[1].parse().unwrap_or(0.0);
-        (
-            num,
-            Some(caps[2].to_string()),
-            caps[3].to_string(),
-        )
+        (num, Some(caps[2].to_string()), caps[3].to_string())
     } else {
         return None;
     };
@@ -145,8 +141,6 @@ fn clean_ingredient(s: &str) -> String {
     let weight_re = Regex::new(r"\s*\(\d+g\)\s*").unwrap();
     weight_re.replace_all(s.trim(), " ").trim().to_string()
 }
-
-
 
 #[cfg(test)]
 mod tests {

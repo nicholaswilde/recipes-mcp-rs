@@ -1,7 +1,7 @@
+use crate::dietary::{DietaryFilters, DietaryPreference};
+use crate::nutrition::{NutritionChart, NutritionalInfo, calculate_nutrition};
 use recipe_scraper::{Extract, SchemaOrgEntry, SchemaOrgRecipe, Scrape};
 use rust_recipe::{NutritionInformation, RecipeInformationProvider};
-use crate::nutrition::{NutritionalInfo, NutritionChart, calculate_nutrition};
-use crate::dietary::{DietaryPreference, DietaryFilters};
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -199,7 +199,10 @@ impl Recipe {
         }
     }
 
-    pub fn get_ingredient_weights(&self, chart: &crate::conversion::data::WeightChart) -> Vec<(String, f64)> {
+    pub fn get_ingredient_weights(
+        &self,
+        chart: &crate::conversion::data::WeightChart,
+    ) -> Vec<(String, f64)> {
         self.ingredients
             .iter()
             .filter_map(|i| {
@@ -216,7 +219,7 @@ impl Recipe {
         nutrition_chart: &NutritionChart,
     ) {
         let weights = self.get_ingredient_weights(weight_chart);
-        let info = calculate_nutrition(&weights, &nutrition_chart);
+        let info = calculate_nutrition(&weights, nutrition_chart);
         self.nutrition = Some(Nutrition::from(info));
     }
 
@@ -242,9 +245,16 @@ impl Recipe {
         for pref in &filters.preferences {
             let matches = match pref {
                 DietaryPreference::Vegan => searchable_text.contains("vegan"),
-                DietaryPreference::Vegetarian => searchable_text.contains("vegetarian") || searchable_text.contains("vegan"),
-                DietaryPreference::GlutenFree => searchable_text.contains("gluten-free") || searchable_text.contains("gluten free"),
-                DietaryPreference::DairyFree => searchable_text.contains("dairy-free") || searchable_text.contains("dairy free"),
+                DietaryPreference::Vegetarian => {
+                    searchable_text.contains("vegetarian") || searchable_text.contains("vegan")
+                }
+                DietaryPreference::GlutenFree => {
+                    searchable_text.contains("gluten-free")
+                        || searchable_text.contains("gluten free")
+                }
+                DietaryPreference::DairyFree => {
+                    searchable_text.contains("dairy-free") || searchable_text.contains("dairy free")
+                }
                 DietaryPreference::Keto => searchable_text.contains("keto"),
                 DietaryPreference::Paleo => searchable_text.contains("paleo"),
             };
@@ -261,27 +271,45 @@ pub fn parse_admonitions_from_html(document: &Html) -> Vec<Admonition> {
 
     // Selectors for common admonition patterns
     let patterns = vec![
-        (AdmonitionType::Note, vec![".recipe-notes", ".notes", ".recipe-note", "[class*='notes']"]),
-        (AdmonitionType::Tip, vec![".recipe-tips", ".tips", ".recipe-tip", "[class*='tips']"]),
-        (AdmonitionType::Variation, vec![".recipe-variations", ".variations", ".recipe-variation", "[class*='variations']"]),
+        (
+            AdmonitionType::Note,
+            vec![
+                ".recipe-notes",
+                ".notes",
+                ".recipe-note",
+                "[class*='notes']",
+            ],
+        ),
+        (
+            AdmonitionType::Tip,
+            vec![".recipe-tips", ".tips", ".recipe-tip", "[class*='tips']"],
+        ),
+        (
+            AdmonitionType::Variation,
+            vec![
+                ".recipe-variations",
+                ".variations",
+                ".recipe-variation",
+                "[class*='variations']",
+            ],
+        ),
     ];
 
     for (kind, selectors) in patterns {
         for selector_str in selectors {
             if let Ok(selector) = Selector::parse(selector_str) {
                 for element in document.select(&selector) {
-                    let content = element
-                        .text()
-                        .collect::<Vec<_>>()
-                        .join(" ");
-                    
-                    let normalized_content = content
-                        .split_whitespace()
-                        .collect::<Vec<_>>()
-                        .join(" ");
-                    
+                    let content = element.text().collect::<Vec<_>>().join(" ");
+
+                    let normalized_content =
+                        content.split_whitespace().collect::<Vec<_>>().join(" ");
+
                     // Filter out short or repetitive content
-                    if normalized_content.len() > 5 && !admonitions.iter().any(|a: &Admonition| a.content == normalized_content) {
+                    if normalized_content.len() > 5
+                        && !admonitions
+                            .iter()
+                            .any(|a: &Admonition| a.content == normalized_content)
+                    {
                         admonitions.push(Admonition {
                             kind,
                             content: normalized_content,
@@ -301,6 +329,7 @@ pub async fn scrape_recipe(
     weight_conversion: bool,
     cache: Option<Arc<dyn crate::cache::RecipeCache>>,
 ) -> Result<Recipe, ScraperError> {
+    #[allow(clippy::collapsible_if)]
     if let Some(c) = &cache {
         if let Some(recipe) = c.get_recipe(url_str).await {
             tracing::info!("Cache hit for recipe: {}", url_str);
@@ -331,7 +360,12 @@ pub async fn scrape_recipe(
                     recipe.convert_ingredients(chart);
                 }
                 if let Some(c) = &cache {
-                    c.set_recipe(url_str, recipe.clone(), std::time::Duration::from_secs(7 * 24 * 3600)).await;
+                    c.set_recipe(
+                        url_str,
+                        recipe.clone(),
+                        std::time::Duration::from_secs(7 * 24 * 3600),
+                    )
+                    .await;
                 }
                 return Ok(recipe);
             }
@@ -351,9 +385,16 @@ pub async fn scrape_recipe(
         }
         Err(e) => {
             if e.is_panic() {
-                tracing::error!("Primary scraper panicked for {}. Attempting fallback.", url_str);
+                tracing::error!(
+                    "Primary scraper panicked for {}. Attempting fallback.",
+                    url_str
+                );
             } else {
-                tracing::error!("Primary scraper task failed for {}: {}. Attempting fallback.", url_str, e);
+                tracing::error!(
+                    "Primary scraper task failed for {}: {}. Attempting fallback.",
+                    url_str,
+                    e
+                );
             }
             None
         }
@@ -399,7 +440,12 @@ pub async fn scrape_recipe(
             // If the primary scraper (rust-recipe) got some admonitions, but failed overall, we might want to merge them.
             // For now, just use the ones from the fallback document.
             if let Some(c) = &cache {
-                c.set_recipe(url_str, recipe.clone(), std::time::Duration::from_secs(7 * 24 * 3600)).await;
+                c.set_recipe(
+                    url_str,
+                    recipe.clone(),
+                    std::time::Duration::from_secs(7 * 24 * 3600),
+                )
+                .await;
             }
             return Ok(recipe);
         }
@@ -427,7 +473,10 @@ pub async fn scrape_recipes(
 ) -> HashMap<String, Result<Recipe, ScraperError>> {
     let mut results = HashMap::new();
     for url in urls {
-        results.insert(url.clone(), scrape_recipe(&url, chart, weight_conversion, cache.clone()).await);
+        results.insert(
+            url.clone(),
+            scrape_recipe(&url, chart, weight_conversion, cache.clone()).await,
+        );
     }
     results
 }
@@ -464,19 +513,24 @@ mod tests {
     #[tokio::test]
     async fn test_scrape_recipe_caching() {
         use tempfile::tempdir;
-        let _ = tracing_subscriber::fmt().with_max_level(tracing::Level::INFO).with_test_writer().try_init();
+        let _ = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::INFO)
+            .with_test_writer()
+            .try_init();
         let dir = tempdir().unwrap();
         let cache = Arc::new(crate::cache::FileRecipeCache::new(dir.path().to_path_buf()));
         let chart = crate::conversion::data::WeightChart::new();
-        
+
         let url = "https://www.food.com/recipe/classic-lasagna-11732";
-        
+
         // First call - should populate cache
-        let res1 = scrape_recipe(url, &chart, true, Some(cache.clone())).await.unwrap();
-        
+        let res1 = scrape_recipe(url, &chart, true, Some(cache.clone()))
+            .await
+            .unwrap();
+
         // Second call - should hit cache
         let res2 = scrape_recipe(url, &chart, true, Some(cache)).await.unwrap();
-        
+
         assert_eq!(res1, res2);
     }
 
@@ -607,12 +661,12 @@ mod tests {
 
         recipe.calculate_nutrition(&weight_chart, &nutrition_chart);
         let initial_calories = recipe.nutrition.as_ref().unwrap().calories.unwrap();
-        
+
         // Scale to 2 servings
         recipe.scale(2);
         recipe.calculate_nutrition(&weight_chart, &nutrition_chart);
         let scaled_calories = recipe.nutrition.as_ref().unwrap().calories.unwrap();
-        
+
         assert_eq!(scaled_calories, initial_calories * 2.0);
     }
 
@@ -623,7 +677,7 @@ mod tests {
             diets: vec!["Vegan".into(), "Gluten-Free".into()],
             ..Recipe::default()
         };
-        
+
         let filters_v = DietaryFilters {
             preferences: vec![DietaryPreference::Vegan],
         };
@@ -658,10 +712,13 @@ mod tests {
         "#;
         let document = scraper::Html::parse_document(html);
         let admonitions = parse_admonitions_from_html(&document);
-        
+
         assert_eq!(admonitions.len(), 2);
         assert_eq!(admonitions[0].kind, AdmonitionType::Note);
-        assert_eq!(admonitions[0].content, "Notes Use cold butter for flakiness.");
+        assert_eq!(
+            admonitions[0].content,
+            "Notes Use cold butter for flakiness."
+        );
         assert_eq!(admonitions[1].kind, AdmonitionType::Variation);
         assert_eq!(admonitions[1].content, "Try adding nuts for extra crunch.");
     }
@@ -673,8 +730,11 @@ mod tests {
             content: "Use cold butter for a flakier crust.".into(),
         };
         let json = serde_json::to_string(&admonition).unwrap();
-        assert_eq!(json, r#"{"kind":"tip","content":"Use cold butter for a flakier crust."}"#);
-        
+        assert_eq!(
+            json,
+            r#"{"kind":"tip","content":"Use cold butter for a flakier crust."}"#
+        );
+
         let deserialized: Admonition = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized, admonition);
     }

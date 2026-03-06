@@ -5,6 +5,9 @@ use serde::Deserialize;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
+    #[arg(short = 'c', long = "config", env = "RECIPES__CONFIG_PATH")]
+    pub config_path: Option<String>,
+
     #[arg(short, long, env = "RECIPES__LOG_LEVEL")]
     pub log_level: Option<String>,
 
@@ -47,8 +50,14 @@ impl AppConfig {
             .set_default("cache_dir", ".cache")?
             .add_source(File::with_name("config/default").required(false))
             .add_source(File::with_name(&format!("config/{}", run_mode)).required(false))
-            .add_source(File::with_name("config/local").required(false))
-            .add_source(Environment::with_prefix("RECIPES").separator("__"));
+            .add_source(File::with_name("config/local").required(false));
+
+        // Custom config file from CLI
+        if let Some(path) = &args.config_path {
+            builder = builder.add_source(File::with_name(path).required(true));
+        }
+
+        builder = builder.add_source(Environment::with_prefix("RECIPES").separator("__"));
 
         // CLI Overrides
         if let Some(level) = args.log_level {
@@ -94,6 +103,7 @@ mod tests {
         }
 
         let args = Args {
+            config_path: None,
             log_level: None,
             transport: None,
             port: None,
@@ -121,6 +131,7 @@ mod tests {
             env::set_var("RECIPES__CACHE_DIR", "/tmp/cache");
         }
         let args = Args {
+            config_path: None,
             log_level: None,
             transport: None,
             port: None,
@@ -152,6 +163,7 @@ mod tests {
             env::set_var("RECIPES__WEIGHT_CONVERSION", "true");
         }
         let args = Args {
+            config_path: None,
             log_level: Some("trace".into()),
             transport: None,
             port: Some(5000),
@@ -177,6 +189,7 @@ mod tests {
             env::remove_var("RECIPES__PORT");
         }
         let args = Args {
+            config_path: None,
             log_level: None,
             transport: None,
             port: Some(8080),
@@ -186,8 +199,9 @@ mod tests {
         };
         let config = AppConfig::load(args).unwrap();
         assert_eq!(config.port, 8080);
-        
+
         let args_default = Args {
+            config_path: None,
             log_level: None,
             transport: None,
             port: None,
@@ -197,5 +211,29 @@ mod tests {
         };
         let config_default = AppConfig::load(args_default).unwrap();
         assert_eq!(config_default.port, 3000);
+    }
+
+    #[test]
+    #[serial]
+    fn test_custom_config_path() {
+        use std::io::Write;
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("config.toml");
+        let mut file = std::fs::File::create(&file_path).unwrap();
+        writeln!(file, "port = 9999").unwrap();
+        let path = file_path.to_str().unwrap().to_string();
+
+        let args = Args {
+            config_path: Some(path),
+            log_level: None,
+            transport: None,
+            port: None,
+            weight_conversion: None,
+            cache_enabled: None,
+            cache_dir: None,
+        };
+
+        let config = AppConfig::load(args).unwrap();
+        assert_eq!(config.port, 9999);
     }
 }

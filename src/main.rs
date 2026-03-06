@@ -3,7 +3,7 @@ use mcp_sdk_rs::protocol::Request;
 use recipes_mcp_rs::config::{AppConfig, Args};
 use recipes_mcp_rs::conversion::data::WeightChart;
 use recipes_mcp_rs::handler::handle_request;
-use recipes_mcp_rs::transport::http::{run_server, ServerState};
+use recipes_mcp_rs::transport::http::{ServerState, run_server};
 use std::io::{BufRead, Write};
 use std::sync::Arc;
 use tracing::{Level, error, info};
@@ -39,7 +39,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let cache: Option<Arc<dyn recipes_mcp_rs::cache::RecipeCache>> = if config.cache_enabled {
         let cache_dir = std::path::PathBuf::from(&config.cache_dir);
-        Some(Arc::new(recipes_mcp_rs::cache::FileRecipeCache::new(cache_dir)))
+        Some(Arc::new(recipes_mcp_rs::cache::FileRecipeCache::new(
+            cache_dir,
+        )))
     } else {
         None
     };
@@ -54,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
             run_server(state).await?;
         }
-        "stdio" | _ => {
+        _ => {
             info!("Running in stdio mode");
             let stdin = std::io::stdin();
             let mut stdout = std::io::stdout();
@@ -72,11 +74,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match serde_json::from_str::<Request>(&line) {
                     Ok(req) => {
                         let response = handle_request(
-                            req, 
-                            weight_chart.clone(), 
+                            req,
+                            weight_chart.clone(),
                             weight_conversion_enabled,
-                            cache.clone()
-                        ).await;
+                            cache.clone(),
+                        )
+                        .await;
                         let response_json = serde_json::to_string(&response).unwrap();
                         if let Err(e) = writeln!(stdout, "{}", response_json) {
                             error!("Failed to write to stdout: {}", e);

@@ -1,10 +1,10 @@
+use crate::dietary::{DietaryFilters, DietaryPreference};
 use crate::scraper::ScraperError;
+use async_trait::async_trait;
 use reqwest::header::USER_AGENT;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
-use async_trait::async_trait;
 use std::sync::Arc;
-use crate::dietary::{DietaryPreference, DietaryFilters};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct SearchResult {
@@ -19,13 +19,19 @@ impl SearchResult {
         }
 
         let text = format!("{} {}", self.title, self.url).to_lowercase();
-        
+
         for pref in &filters.preferences {
             let matches = match pref {
                 DietaryPreference::Vegan => text.contains("vegan"),
-                DietaryPreference::Vegetarian => text.contains("vegetarian") || text.contains("vegan"),
-                DietaryPreference::GlutenFree => text.contains("gluten-free") || text.contains("gluten free"),
-                DietaryPreference::DairyFree => text.contains("dairy-free") || text.contains("dairy free"),
+                DietaryPreference::Vegetarian => {
+                    text.contains("vegetarian") || text.contains("vegan")
+                }
+                DietaryPreference::GlutenFree => {
+                    text.contains("gluten-free") || text.contains("gluten free")
+                }
+                DietaryPreference::DairyFree => {
+                    text.contains("dairy-free") || text.contains("dairy free")
+                }
                 DietaryPreference::Keto => text.contains("keto"),
                 DietaryPreference::Paleo => text.contains("paleo"),
             };
@@ -56,9 +62,15 @@ fn create_search_client() -> reqwest::Client {
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36".parse().unwrap());
     headers.insert(reqwest::header::ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7".parse().unwrap());
-    headers.insert(reqwest::header::ACCEPT_LANGUAGE, "en-US,en;q=0.9".parse().unwrap());
-    headers.insert(reqwest::header::REFERER, "https://www.google.com/".parse().unwrap());
-    
+    headers.insert(
+        reqwest::header::ACCEPT_LANGUAGE,
+        "en-US,en;q=0.9".parse().unwrap(),
+    );
+    headers.insert(
+        reqwest::header::REFERER,
+        "https://www.google.com/".parse().unwrap(),
+    );
+
     reqwest::Client::builder()
         .default_headers(headers)
         .cookie_store(true)
@@ -77,19 +89,23 @@ impl RecipeSearchProvider for AllRecipesProvider {
             urlencoding::encode(query)
         );
 
-        let response = client.get(&url)
+        let response = client
+            .get(&url)
             .send()
             .await
             .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
 
-        let html_content = response
-            .text()
-            .await
-            .map_err(|e| ScraperError::ScrapeFailed(format!("Failed to get text from response: {}", e)))?;
+        let html_content = response.text().await.map_err(|e| {
+            ScraperError::ScrapeFailed(format!("Failed to get text from response: {}", e))
+        })?;
 
         tracing::debug!("HTML length from AllRecipes: {}", html_content.len());
 
-        if html_content.contains("Request blocked") || html_content.contains("Cloudflare") || html_content.contains("Just a moment...") || html_content.contains("Access Denied") {
+        if html_content.contains("Request blocked")
+            || html_content.contains("Cloudflare")
+            || html_content.contains("Just a moment...")
+            || html_content.contains("Access Denied")
+        {
             tracing::warn!("Request blocked by Cloudflare/Access Denied");
             return Err(ScraperError::RequestBlocked(
                 "Search request blocked by provider (Cloudflare/Access Denied)".into(),
@@ -158,19 +174,23 @@ impl RecipeSearchProvider for FoodNetworkProvider {
             urlencoding::encode(query)
         );
 
-        let response = client.get(&url)
+        let response = client
+            .get(&url)
             .send()
             .await
             .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
 
-        let html_content = response
-            .text()
-            .await
-            .map_err(|e| ScraperError::ScrapeFailed(format!("Failed to get text from response: {}", e)))?;
+        let html_content = response.text().await.map_err(|e| {
+            ScraperError::ScrapeFailed(format!("Failed to get text from response: {}", e))
+        })?;
 
         tracing::debug!("HTML length from Food Network: {}", html_content.len());
 
-        if html_content.contains("Request blocked") || html_content.contains("Cloudflare") || html_content.contains("Just a moment...") || html_content.contains("Access Denied") {
+        if html_content.contains("Request blocked")
+            || html_content.contains("Cloudflare")
+            || html_content.contains("Just a moment...")
+            || html_content.contains("Access Denied")
+        {
             tracing::warn!("Request blocked by Cloudflare/Access Denied");
             return Err(ScraperError::RequestBlocked(
                 "Search request blocked by provider (Cloudflare/Access Denied)".into(),
@@ -183,7 +203,7 @@ impl RecipeSearchProvider for FoodNetworkProvider {
             ".m-MediaBlock",
             "a.m-RecipeCard__a-Headline",
             "h3.m-RecipeCard__a-Headline a",
-            "span.m-RecipeCard__a-HeadlineText"
+            "span.m-RecipeCard__a-HeadlineText",
         ];
 
         let mut results = Vec::new();
@@ -192,19 +212,30 @@ impl RecipeSearchProvider for FoodNetworkProvider {
             for element in document.select(&selector) {
                 // Try to find headline/link within the container
                 let headline_selector = Selector::parse(".m-MediaBlock__a-Headline a").unwrap();
-                let (title, link_href) = if let Some(headline_link) = element.select(&headline_selector).next() {
-                    let t = headline_link.text().collect::<Vec<_>>().join(" ").trim().to_string();
-                    let h = headline_link.value().attr("href").map(|s| s.to_string());
-                    (t, h)
-                } else {
-                    let t = element.text().collect::<Vec<_>>().join(" ").trim().to_string();
-                    let h = if element.value().name() == "a" {
-                        element.value().attr("href").map(|s| s.to_string())
+                let (title, link_href) =
+                    if let Some(headline_link) = element.select(&headline_selector).next() {
+                        let t = headline_link
+                            .text()
+                            .collect::<Vec<_>>()
+                            .join(" ")
+                            .trim()
+                            .to_string();
+                        let h = headline_link.value().attr("href").map(|s| s.to_string());
+                        (t, h)
                     } else {
-                        None
+                        let t = element
+                            .text()
+                            .collect::<Vec<_>>()
+                            .join(" ")
+                            .trim()
+                            .to_string();
+                        let h = if element.value().name() == "a" {
+                            element.value().attr("href").map(|s| s.to_string())
+                        } else {
+                            None
+                        };
+                        (t, h)
                     };
-                    (t, h)
-                };
 
                 if title.is_empty() {
                     continue;
@@ -216,11 +247,9 @@ impl RecipeSearchProvider for FoodNetworkProvider {
                     let mut parent = element.parent();
                     let mut link = None;
                     while let Some(p) = parent {
-                        if let Some(el) = p.value().as_element() {
-                            if el.name() == "a" {
-                                link = el.attr("href").map(|s| s.to_string());
-                                break;
-                            }
+                        if let Some(el) = p.value().as_element().filter(|e| e.name() == "a") {
+                            link = el.attr("href").map(|s| s.to_string());
+                            break;
                         }
                         parent = p.parent();
                     }
@@ -237,10 +266,7 @@ impl RecipeSearchProvider for FoodNetworkProvider {
                     }
 
                     if !results.iter().any(|r: &SearchResult| r.url == link) {
-                        results.push(SearchResult {
-                            title,
-                            url: link,
-                        });
+                        results.push(SearchResult { title, url: link });
                     }
                 }
 
@@ -268,19 +294,23 @@ impl RecipeSearchProvider for SeriousEatsProvider {
             urlencoding::encode(query)
         );
 
-        let response = client.get(&url)
+        let response = client
+            .get(&url)
             .send()
             .await
             .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
 
-        let html_content = response
-            .text()
-            .await
-            .map_err(|e| ScraperError::ScrapeFailed(format!("Failed to get text from response: {}", e)))?;
+        let html_content = response.text().await.map_err(|e| {
+            ScraperError::ScrapeFailed(format!("Failed to get text from response: {}", e))
+        })?;
 
         tracing::debug!("HTML length from Serious Eats: {}", html_content.len());
 
-        if html_content.contains("Request blocked") || html_content.contains("Cloudflare") || html_content.contains("Just a moment...") || html_content.contains("Access Denied") {
+        if html_content.contains("Request blocked")
+            || html_content.contains("Cloudflare")
+            || html_content.contains("Just a moment...")
+            || html_content.contains("Access Denied")
+        {
             tracing::warn!("Request blocked by Cloudflare/Access Denied");
             return Err(ScraperError::RequestBlocked(
                 "Search request blocked by provider (Cloudflare/Access Denied)".into(),
@@ -296,9 +326,19 @@ impl RecipeSearchProvider for SeriousEatsProvider {
             for element in document.select(&selector) {
                 let title_selector = Selector::parse("span.card__title-text").unwrap();
                 let title = if let Some(title_elem) = element.select(&title_selector).next() {
-                    title_elem.text().collect::<Vec<_>>().join(" ").trim().to_string()
+                    title_elem
+                        .text()
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                        .trim()
+                        .to_string()
                 } else {
-                    element.text().collect::<Vec<_>>().join(" ").trim().to_string()
+                    element
+                        .text()
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                        .trim()
+                        .to_string()
                 };
 
                 if title.is_empty() {
@@ -337,7 +377,8 @@ impl RecipeSearchProvider for TheMealDBProvider {
             urlencoding::encode(query)
         );
 
-        let response = client.get(&url)
+        let response = client
+            .get(&url)
             .send()
             .await
             .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
@@ -355,10 +396,9 @@ impl RecipeSearchProvider for TheMealDBProvider {
             meals: Option<Vec<Meal>>,
         }
 
-        let data: Response = response
-            .json()
-            .await
-            .map_err(|e| ScraperError::ScrapeFailed(format!("Failed to parse TheMealDB response: {}", e)))?;
+        let data: Response = response.json().await.map_err(|e| {
+            ScraperError::ScrapeFailed(format!("Failed to parse TheMealDB response: {}", e))
+        })?;
 
         let mut results = Vec::new();
         if let Some(meals) = data.meals {
@@ -385,8 +425,12 @@ pub async fn search_recipes(
     filters: DietaryFilters,
     cache: Option<Arc<dyn crate::cache::RecipeCache>>,
 ) -> Result<Vec<SearchResult>, ScraperError> {
+    #[allow(clippy::collapsible_if)]
     if let Some(c) = &cache {
-        if let Some(results) = c.get_search_results(query, limit, &provider, &filters).await {
+        if let Some(results) = c
+            .get_search_results(query, limit, &provider, &filters)
+            .await
+        {
             tracing::info!("Cache hit for search: {}", query);
             return Ok(results);
         }
@@ -398,9 +442,9 @@ pub async fn search_recipes(
         RecipeProvider::SeriousEats => Box::new(SeriousEatsProvider),
         RecipeProvider::TheMealDB => Box::new(TheMealDBProvider),
     };
-    
+
     let results = p.search(query, limit * 2).await?; // Fetch more to allow for filtering
-    
+
     let filtered: Vec<SearchResult> = results
         .into_iter()
         .filter(|r| r.matches_filters(&filters))
@@ -408,7 +452,15 @@ pub async fn search_recipes(
         .collect();
 
     if let Some(c) = &cache {
-        c.set_search_results(query, limit, &provider, &filters, filtered.clone(), std::time::Duration::from_secs(24 * 3600)).await;
+        c.set_search_results(
+            query,
+            limit,
+            &provider,
+            &filters,
+            filtered.clone(),
+            std::time::Duration::from_secs(24 * 3600),
+        )
+        .await;
     }
 
     Ok(filtered)
@@ -420,10 +472,20 @@ mod tests {
 
     #[tokio::test]
     async fn test_search_recipes_not_empty() {
-        let res = search_recipes("lasagna", 5, RecipeProvider::AllRecipes, DietaryFilters::default(), None).await;
+        let res = search_recipes(
+            "lasagna",
+            5,
+            RecipeProvider::AllRecipes,
+            DietaryFilters::default(),
+            None,
+        )
+        .await;
         match res {
             Ok(results) => {
-                assert!(!results.is_empty(), "AllRecipes results should not be empty");
+                assert!(
+                    !results.is_empty(),
+                    "AllRecipes results should not be empty"
+                );
                 assert!(results.len() <= 5);
                 assert!(results[0].url.contains("allrecipes.com"));
             }
@@ -436,10 +498,20 @@ mod tests {
 
     #[tokio::test]
     async fn test_search_food_network() {
-        let res = search_recipes("lasagna", 5, RecipeProvider::FoodNetwork, DietaryFilters::default(), None).await;
+        let res = search_recipes(
+            "lasagna",
+            5,
+            RecipeProvider::FoodNetwork,
+            DietaryFilters::default(),
+            None,
+        )
+        .await;
         match res {
             Ok(results) => {
-                assert!(!results.is_empty(), "FoodNetwork results should not be empty");
+                assert!(
+                    !results.is_empty(),
+                    "FoodNetwork results should not be empty"
+                );
                 assert!(results[0].url.contains("foodnetwork.com"));
             }
             Err(ScraperError::RequestBlocked(_)) => {
@@ -451,10 +523,20 @@ mod tests {
 
     #[tokio::test]
     async fn test_search_serious_eats() {
-        let res = search_recipes("lasagna", 5, RecipeProvider::SeriousEats, DietaryFilters::default(), None).await;
+        let res = search_recipes(
+            "lasagna",
+            5,
+            RecipeProvider::SeriousEats,
+            DietaryFilters::default(),
+            None,
+        )
+        .await;
         match res {
             Ok(results) => {
-                assert!(!results.is_empty(), "SeriousEats results should not be empty");
+                assert!(
+                    !results.is_empty(),
+                    "SeriousEats results should not be empty"
+                );
                 assert!(results[0].url.contains("seriouseats.com"));
             }
             Err(ScraperError::RequestBlocked(_)) => {
@@ -466,30 +548,50 @@ mod tests {
 
     #[tokio::test]
     async fn test_search_themealdb() {
-        let res = search_recipes("lasagna", 5, RecipeProvider::TheMealDB, DietaryFilters::default(), None).await
-            .expect("TheMealDB search failed");
+        let res = search_recipes(
+            "lasagna",
+            5,
+            RecipeProvider::TheMealDB,
+            DietaryFilters::default(),
+            None,
+        )
+        .await
+        .expect("TheMealDB search failed");
         assert!(!res.is_empty(), "TheMealDB results should not be empty");
         assert!(res[0].url.contains("themealdb.com"));
     }
 
     #[tokio::test]
     async fn test_search_recipes_caching() {
-        let _ = tracing_subscriber::fmt().with_max_level(tracing::Level::INFO).with_test_writer().try_init();
+        let _ = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::INFO)
+            .with_test_writer()
+            .try_init();
         use tempfile::tempdir;
         let dir = tempdir().unwrap();
         let cache = Arc::new(crate::cache::FileRecipeCache::new(dir.path().to_path_buf()));
-        
+
         let query = "pizza";
         let limit = 1;
         let provider = RecipeProvider::TheMealDB;
         let filters = DietaryFilters::default();
-        
+
         // First call - should populate cache
-        let res1 = search_recipes(query, limit, provider.clone(), filters.clone(), Some(cache.clone())).await.unwrap();
-        
+        let res1 = search_recipes(
+            query,
+            limit,
+            provider.clone(),
+            filters.clone(),
+            Some(cache.clone()),
+        )
+        .await
+        .unwrap();
+
         // Second call - should hit cache
-        let res2 = search_recipes(query, limit, provider, filters, Some(cache)).await.unwrap();
-        
+        let res2 = search_recipes(query, limit, provider, filters, Some(cache))
+            .await
+            .unwrap();
+
         assert_eq!(res1, res2);
     }
 

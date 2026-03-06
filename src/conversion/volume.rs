@@ -6,9 +6,12 @@ pub enum UnitSystem {
     Imperial,
 }
 
-pub fn convert_volume(amount: &VolumetricAmount, target_system: UnitSystem) -> Option<(f64, String)> {
+pub fn convert_volume(
+    amount: &VolumetricAmount,
+    target_system: UnitSystem,
+) -> Option<(f64, String)> {
     let ml = to_ml(amount.value, &amount.unit)?;
-    
+
     match target_system {
         UnitSystem::Metric => {
             if ml >= 1000.0 {
@@ -16,11 +19,12 @@ pub fn convert_volume(amount: &VolumetricAmount, target_system: UnitSystem) -> O
             } else {
                 Some((ml, "ml".to_string()))
             }
-        },
+        }
         UnitSystem::Imperial => {
             // Convert to cups as a base for imperial
             let cups = ml / 236.588;
-            if cups >= 4.0 { // Gallons/Quarts
+            if cups >= 4.0 {
+                // Gallons/Quarts
                 let gallons = cups / 16.0;
                 if gallons >= 1.0 {
                     return Some((gallons, "gal".to_string()));
@@ -45,12 +49,15 @@ pub fn convert_volume(amount: &VolumetricAmount, target_system: UnitSystem) -> O
 
 pub fn format_with_volume(ingredient_str: &str, target_system: UnitSystem) -> String {
     use crate::conversion::parser::parse_ingredient;
-    if let Some(vol) = parse_ingredient(ingredient_str) {
-        if let Some((val, unit)) = convert_volume(&vol, target_system) {
-            // Only append if the unit is different from original
-            if unit.to_lowercase() != vol.unit.to_lowercase() {
-                 return format!("{} {} ({:.2} {}) {}", vol.value, vol.unit, val, unit, vol.ingredient);
-            }
+    if let Some((vol, (val, unit))) = parse_ingredient(ingredient_str)
+        .and_then(|v| convert_volume(&v, target_system).map(|vol_conv| (v, vol_conv)))
+    {
+        // Only append if the unit is different from original
+        if unit.to_lowercase() != vol.unit.to_lowercase() {
+            return format!(
+                "{} {} ({:.2} {}) {}",
+                vol.value, vol.unit, val, unit, vol.ingredient
+            );
         }
     }
     ingredient_str.to_string()
@@ -62,7 +69,9 @@ fn to_ml(value: f64, unit: &str) -> Option<f64> {
         "l" | "liter" | "liters" => Some(value * 1000.0),
         "tsp" | "teaspoon" | "teaspoons" => Some(value * 4.92892),
         "tbsp" | "tablespoon" | "tablespoons" => Some(value * 14.7868),
-        "fl oz" | "fluid oz" | "fluid ounce" | "fluid ounces" | "oz" | "ounce" | "ounces" => Some(value * 29.5735),
+        "fl oz" | "fluid oz" | "fluid ounce" | "fluid ounces" | "oz" | "ounce" | "ounces" => {
+            Some(value * 29.5735)
+        }
         "cup" | "cups" => Some(value * 236.588),
         "pint" | "pints" | "pt" => Some(value * 473.176),
         "quart" | "quarts" | "qt" => Some(value * 946.353),

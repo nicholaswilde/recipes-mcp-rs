@@ -1,14 +1,17 @@
+use crate::conversion::data::WeightChart;
+use crate::handler::handle_request;
 use axum::{
+    Json, Router,
     extract::State,
     http::StatusCode,
-    response::{sse::{Event, Sse}, IntoResponse},
+    response::{
+        IntoResponse,
+        sse::{Event, Sse},
+    },
     routing::{get, post},
-    Json, Router,
 };
 use futures::stream::{self, Stream};
 use mcp_sdk_rs::protocol::Request;
-use crate::conversion::data::WeightChart;
-use crate::handler::handle_request;
 use serde::Deserialize;
 use std::convert::Infallible;
 use std::sync::Arc;
@@ -47,9 +50,7 @@ async fn sse_handler(
     State(state): State<Arc<ServerState>>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     let endpoint = format!("http://localhost:{}/message", state.port);
-    let initial_event = Event::default()
-        .event("endpoint")
-        .data(endpoint);
+    let initial_event = Event::default().event("endpoint").data(endpoint);
 
     let stream = stream::once(async move { Ok(initial_event) });
 
@@ -65,7 +66,8 @@ async fn handle_message(
         state.weight_chart.clone(),
         state.weight_conversion_enabled,
         state.cache.clone(),
-    ).await;
+    )
+    .await;
 
     (StatusCode::OK, Json(response))
 }
@@ -74,16 +76,18 @@ async fn handle_message(
 mod tests {
     use super::*;
     use mcp_sdk_rs::protocol::{RequestId, Response};
-    use tokio::time::{sleep, Duration};
+    use tokio::time::{Duration, sleep};
 
     #[tokio::test]
     async fn test_http_transport_lifecycle() {
         let chart = Arc::new(WeightChart::new());
         let port = 0; // Random port
-        
-        let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", port)).await.unwrap();
+
+        let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", port))
+            .await
+            .unwrap();
         let actual_port = listener.local_addr().unwrap().port();
-        
+
         let state = Arc::new(ServerState {
             weight_chart: chart,
             weight_conversion_enabled: true,
@@ -104,9 +108,10 @@ mod tests {
         sleep(Duration::from_millis(100)).await;
 
         let client = reqwest::Client::new();
-        
+
         // Test SSE
-        let sse_resp = client.get(format!("http://127.0.0.1:{}/sse", actual_port))
+        let sse_resp = client
+            .get(format!("http://127.0.0.1:{}/sse", actual_port))
             .send()
             .await
             .unwrap();
@@ -120,16 +125,17 @@ mod tests {
             method: "tools/list".into(),
             params: None,
         };
-        let msg_resp = client.post(format!("http://127.0.0.1:{}/message", actual_port))
+        let msg_resp = client
+            .post(format!("http://127.0.0.1:{}/message", actual_port))
             .json(&req)
             .send()
             .await
             .unwrap();
-        
+
         assert_eq!(msg_resp.status(), StatusCode::OK);
         let mcp_resp: Response = msg_resp.json().await.unwrap();
         assert_eq!(mcp_resp.id, RequestId::Number(1));
-        
+
         server_handle.abort();
     }
 }
