@@ -10,7 +10,7 @@
 - [x] Update `search_recipes` to accept a `provider` enum. (COMPLETED)
 
 
-## Phase 3: Integration
+## Phase 3: Integration [checkpoint: be206b79b4e4e6c0ca9992eea73b2126c600c231]
 - [x] Update the `manage_recipes` tool definition to include `provider`. (COMPLETED)
 - [x] Update the `search` action handler in `src/main.rs`. (COMPLETED)
 
