@@ -5,7 +5,7 @@
 - [x] Task: Update the `Recipe` struct to include an optional `Vec<Admonition>`. (COMPLETED)
 - [x] Task: Conductor - User Manual Verification 'Data Modeling' (Protocol in workflow.md) (COMPLETED)
 
-## Phase 2: Scraper Enhancement
+## Phase 2: Scraper Enhancement [checkpoint: fb82358d4ed046bfd4470efe17a5401e4ad04d93]
 - [x] Task: Update `RecipeSearchProvider` logic or tiered scraping to detect admonition sections in HTML. (COMPLETED)
 - [x] Task: Implement TDD for admonition parsing: (COMPLETED)
     - [x] Sub-task: Write failing unit tests with mock HTML containing tips and notes. (COMPLETED)
