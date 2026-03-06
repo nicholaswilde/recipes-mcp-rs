@@ -27,6 +27,6 @@
 - [x] Task: Conductor - User Manual Verification 'Output Formatting' (Protocol in workflow.md) (COMPLETED)
 
 ## Phase 5: Verification
-- [ ] Task: Run integration tests scraping a real or complex mock recipe to verify end-to-end flow.
-- [ ] Task: Verify that `admonition_types` CLI argument correctly filters output.
+- [x] Task: Run integration tests scraping a real or complex mock recipe to verify end-to-end flow. (COMPLETED)
+- [x] Task: Verify that `admonition_types` CLI argument correctly filters output. (COMPLETED)
 - [ ] Task: Conductor - User Manual Verification 'Verification' (Protocol in workflow.md)
