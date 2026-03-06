@@ -88,6 +88,11 @@ pub async fn handle_request(
                                     "limit": {
                                         "type": "integer",
                                         "description": "Maximum number of search results to return (optional for 'search' action, default 5)"
+                                    },
+                                    "provider": {
+                                        "type": "string",
+                                        "enum": ["allrecipes", "foodnetwork", "seriouseats"],
+                                        "description": "The recipe provider to search (optional for 'search' action, default 'allrecipes')"
                                     }
                                 },
                                 "required": ["action"]

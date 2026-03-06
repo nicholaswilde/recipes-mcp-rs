@@ -11,8 +11,8 @@
 
 
 ## Phase 3: Integration
-- [ ] Update the `manage_recipes` tool definition to include `provider`.
-- [ ] Update the `search` action handler in `src/main.rs`.
+- [x] Update the `manage_recipes` tool definition to include `provider`. (COMPLETED)
+- [x] Update the `search` action handler in `src/main.rs`. (COMPLETED)
 
 ## Phase 4: Testing
 - [ ] Add integration tests for searching each provider.
