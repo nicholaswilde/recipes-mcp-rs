@@ -24,8 +24,9 @@
 - [x] Task: Implement cache directory management (creation and initialization).
 - [x] Task: Conductor - User Manual Verification 'Persistence & TTL Management'
 
-## Phase 5: Configuration & Tool Integration
-- [ ] Task: Add caching options to `src/config.rs`.
-- [ ] Task: Add `bypass_cache` flag to MCP tool parameters in `src/handler.rs`.
-- [ ] Task: Final integration testing and cleanup.
-- [ ] Task: Conductor - User Manual Verification 'Configuration & Tool Integration'
+## Phase 5: Configuration & Tool Integration [checkpoint: 3cf447a7077a4cba8c10618adc9746b6227b0126]
+- [x] Task: Add caching options to `src/config.rs`.
+- [x] Task: Add `bypass_cache` flag to MCP tool parameters in `src/handler.rs`.
+- [x] Task: Final integration testing and cleanup.
+- [x] Task: Conductor - User Manual Verification 'Configuration & Tool Integration'
+
