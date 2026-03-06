@@ -18,6 +18,7 @@ pub struct ManageRecipesArgs {
     pub format_type: Option<String>,
     pub query: Option<String>,
     pub limit: Option<u32>,
+    pub provider: Option<search::RecipeProvider>,
 }
 
 pub async fn handle_request(
@@ -295,7 +296,8 @@ pub async fn handle_request(
                                 }
                             };
                             let limit = args.limit.unwrap_or(5);
-                            let results = search::search_recipes(&query, limit).await;
+                            let provider = args.provider.unwrap_or_default();
+                            let results = search::search_recipes(&query, limit, provider).await;
                             match results {
                                 Ok(res) => Response {
                                     jsonrpc: JSONRPC_VERSION.into(),

@@ -5,7 +5,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## Active Tracks
 
 ---
-## [ ] Track: Multi-Provider Recipe Search
+## [~] Track: Multi-Provider Recipe Search
 - Link: [multi_provider_search_20260304](./tracks/multi_provider_search_20260304/index.md)
 - Description: Expand recipe search to support multiple providers (Food Network, Serious Eats, etc.) with provider selection.
 
