@@ -14,7 +14,7 @@
 - [x] Update the `manage_recipes` tool definition to include `provider`. (COMPLETED)
 - [x] Update the `search` action handler in `src/main.rs`. (COMPLETED)
 
-## Phase 4: Testing
+## Phase 4: Testing [checkpoint: 23c755a7c23a916a2f66d1dc4a252e57310d06be]
 - [x] Add integration tests for searching each provider. (COMPLETED)
 - [x] Test the default provider behavior (AllRecipes). (COMPLETED)
 
