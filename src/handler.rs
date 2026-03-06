@@ -22,12 +22,14 @@ pub struct ManageRecipesArgs {
     pub provider: Option<search::RecipeProvider>,
     pub dietary_filters: Option<Vec<DietaryPreference>>,
     pub admonition_types: Option<Vec<AdmonitionType>>,
+    pub bypass_cache: Option<bool>,
 }
 
 pub async fn handle_request(
     req: Request,
     weight_chart: Arc<WeightChart>,
     weight_conversion_enabled: bool,
+    cache: Option<Arc<dyn crate::cache::RecipeCache>>,
 ) -> Response {
     let id = req.id.clone();
     match req.method.as_str() {
@@ -112,6 +114,10 @@ pub async fn handle_request(
                                             "enum": ["tip", "note", "variation"]
                                         },
                                         "description": "List of admonition types to extract (optional, default: all)"
+                                    },
+                                    "bypass_cache": {
+                                        "type": "boolean",
+                                        "description": "If true, bypass the cache and force a fresh request (optional, default: false)"
                                     }
                                 },
                                 "required": ["action"]
@@ -163,11 +169,16 @@ pub async fn handle_request(
                     };
 
                     let admonition_types = args.admonition_types.clone();
+                    let cache = if args.bypass_cache.unwrap_or(false) {
+                        None
+                    } else {
+                        cache
+                    };
 
                     match args.action.as_str() {
                         "scrape" => {
                             let urls = args.urls.unwrap_or_default();
-                            let results = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, None).await;
+                            let results = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, cache.clone()).await;
                             
                             // Apply filtering
                             let filtered_results: HashMap<String, Result<Recipe, ScraperError>> = results
@@ -221,7 +232,7 @@ pub async fn handle_request(
                             }
 
                             let mut recipes_to_scale: Vec<Recipe> = if let Some(urls) = args.urls {
-                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, None).await;
+                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, cache.clone()).await;
                                 results
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
@@ -281,7 +292,7 @@ pub async fn handle_request(
                         "format" => {
                             let format_type = args.format_type.unwrap_or_else(|| "markdown".into());
                             let mut recipes_to_format: Vec<Recipe> = if let Some(urls) = args.urls {
-                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, None).await;
+                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, cache.clone()).await;
                                 results
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
@@ -380,7 +391,7 @@ pub async fn handle_request(
                             };
                             let limit = args.limit.unwrap_or(5);
                             let provider = args.provider.unwrap_or_default();
-                            let results = search::search_recipes(&query, limit, provider, dietary_filters, None).await;
+                            let results = search::search_recipes(&query, limit, provider, dietary_filters, cache.clone()).await;
                             match results {
                                 Ok(res) => Response {
                                     jsonrpc: JSONRPC_VERSION.into(),
@@ -409,7 +420,7 @@ pub async fn handle_request(
                         }
                         "nutrition" => {
                             let recipes_to_analyze: Vec<Recipe> = if let Some(urls) = args.urls {
-                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, None).await;
+                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled, cache.clone()).await;
                                 results
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
@@ -574,7 +585,7 @@ mod tests {
             method: "initialize".into(),
             params: None,
         };
-        let resp = handle_request(req, chart, true).await;
+        let resp = handle_request(req, chart, true, None).await;
         assert_eq!(resp.id, RequestId::Number(1));
         let result = resp.result.unwrap();
         assert_eq!(result["protocolVersion"], "2024-11-05");
@@ -589,7 +600,7 @@ mod tests {
             method: "tools/list".into(),
             params: None,
         };
-        let resp = handle_request(req, chart, true).await;
+        let resp = handle_request(req, chart, true, None).await;
         assert_eq!(resp.id, RequestId::Number(1));
         let result = resp.result.unwrap();
         let tools = result["tools"].as_array().unwrap();

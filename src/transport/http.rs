@@ -19,6 +19,7 @@ pub struct ServerState {
     pub weight_chart: Arc<WeightChart>,
     pub weight_conversion_enabled: bool,
     pub port: u16,
+    pub cache: Option<Arc<dyn crate::cache::RecipeCache>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -63,6 +64,7 @@ async fn handle_message(
         req,
         state.weight_chart.clone(),
         state.weight_conversion_enabled,
+        state.cache.clone(),
     ).await;
 
     (StatusCode::OK, Json(response))
@@ -86,6 +88,7 @@ mod tests {
             weight_chart: chart,
             weight_conversion_enabled: true,
             port: actual_port,
+            cache: None,
         });
 
         let app = Router::new()

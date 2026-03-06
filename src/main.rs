@@ -37,12 +37,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let weight_chart = Arc::new(WeightChart::new());
     let weight_conversion_enabled = config.weight_conversion;
 
+    let cache: Option<Arc<dyn recipes_mcp_rs::cache::RecipeCache>> = if config.cache_enabled {
+        let cache_dir = std::path::PathBuf::from(&config.cache_dir);
+        Some(Arc::new(recipes_mcp_rs::cache::FileRecipeCache::new(cache_dir)))
+    } else {
+        None
+    };
+
     match config.transport.to_lowercase().as_str() {
         "http" => {
             let state = ServerState {
                 weight_chart,
                 weight_conversion_enabled,
                 port: config.port,
+                cache,
             };
             run_server(state).await?;
         }
@@ -63,7 +71,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 match serde_json::from_str::<Request>(&line) {
                     Ok(req) => {
-                        let response = handle_request(req, weight_chart.clone(), weight_conversion_enabled).await;
+                        let response = handle_request(
+                            req, 
+                            weight_chart.clone(), 
+                            weight_conversion_enabled,
+                            cache.clone()
+                        ).await;
                         let response_json = serde_json::to_string(&response).unwrap();
                         if let Err(e) = writeln!(stdout, "{}", response_json) {
                             error!("Failed to write to stdout: {}", e);
