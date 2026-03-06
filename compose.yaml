@@ -1,0 +1,14 @@
+services:
+  recipes-mcp:
+    image: ghcr.io/nicholaswilde/recipes-mcp-rs:latest
+    container_name: recipes-mcp
+    environment:
+      - RECIPES__TRANSPORT=http
+      - RECIPES__PORT=3000
+      # - RECIPES__LOG_LEVEL=info
+      # - RECIPES__WEIGHT_CONVERSION=true
+    ports:
+      - "3000:3000"
+    # env_file:
+    #   - .env
+    restart: unless-stopped
