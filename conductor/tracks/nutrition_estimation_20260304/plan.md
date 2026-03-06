@@ -1,6 +1,6 @@
 # Implementation Plan: Recipe Nutrition Estimation
 
-## Phase 1: Data Modeling
+## Phase 1: Data Modeling [checkpoint: 7c5ade3b59c8aaca6db938a75528f502d7753aee]
 - [x] Define the `NutritionalInfo` struct for macro/micronutrients.
 - [x] Create an initial internal dataset of nutritional values for common ingredients (matching `WeightChart`). (COMPLETED)
 
