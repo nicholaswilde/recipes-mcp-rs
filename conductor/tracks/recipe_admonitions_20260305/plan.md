@@ -20,11 +20,11 @@
 - [x] Task: Conductor - User Manual Verification 'Tool & Handler Integration' (Protocol in workflow.md) (COMPLETED)
 
 ## Phase 4: Output Formatting
-- [ ] Task: Update `src/formatter.rs` to include a "Tips & Notes" section in the Markdown output.
-- [ ] Task: Implement TDD for formatting:
-    - [ ] Sub-task: Write tests for `to_markdown` with recipes containing different admonitions.
-    - [ ] Sub-task: Update `to_markdown` to render the new section.
-- [ ] Task: Conductor - User Manual Verification 'Output Formatting' (Protocol in workflow.md)
+- [x] Task: Update `src/formatter.rs` to include a "Tips & Notes" section in the Markdown output. (COMPLETED)
+- [x] Task: Implement TDD for formatting: (COMPLETED)
+    - [x] Sub-task: Write tests for `to_markdown` with recipes containing different admonitions. (COMPLETED)
+    - [x] Sub-task: Update `to_markdown` to render the new section. (COMPLETED)
+- [x] Task: Conductor - User Manual Verification 'Output Formatting' (Protocol in workflow.md) (COMPLETED)
 
 ## Phase 5: Verification
 - [ ] Task: Run integration tests scraping a real or complex mock recipe to verify end-to-end flow.

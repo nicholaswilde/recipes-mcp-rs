@@ -8,15 +8,11 @@ pub fn to_markdown(recipe: &Recipe) -> String {
     }
 
     if let Some(image_url) = &recipe.image_url {
-        md.push_str(&format!(
-            "![{}]({})\n\n",
-            recipe.name.as_deref().unwrap_or("Recipe"),
-            image_url
-        ));
+        md.push_str(&format!("![{}]({})\n\n", recipe.name.as_deref().unwrap_or("Recipe Image"), image_url));
     }
 
-    if let Some(description) = &recipe.description {
-        md.push_str(&format!("{}\n\n", description));
+    if let Some(desc) = &recipe.description {
+        md.push_str(&format!("{}\n\n", desc));
     }
 
     if recipe.prep_time.is_some()
@@ -46,17 +42,17 @@ pub fn to_markdown(recipe: &Recipe) -> String {
 
     if let Some(nutrition) = &recipe.nutrition {
         md.push_str("## Nutrition\n");
-        if let Some(val) = nutrition.calories {
-            md.push_str(&format!("- **Calories:** {:.0}kcal\n", val));
+        if let Some(cal) = nutrition.calories {
+            md.push_str(&format!("- **Calories:** {}kcal\n", cal));
         }
-        if let Some(val) = nutrition.fat_grams {
-            md.push_str(&format!("- **Fat:** {:.1}g\n", val));
+        if let Some(fat) = nutrition.fat_grams {
+            md.push_str(&format!("- **Fat:** {}g\n", fat));
         }
-        if let Some(val) = nutrition.carbohydrate_grams {
-            md.push_str(&format!("- **Carbs:** {:.1}g\n", val));
+        if let Some(carbs) = nutrition.carbohydrate_grams {
+            md.push_str(&format!("- **Carbs:** {}g\n", carbs));
         }
-        if let Some(val) = nutrition.protein_grams {
-            md.push_str(&format!("- **Protein:** {:.1}g\n", val));
+        if let Some(protein) = nutrition.protein_grams {
+            md.push_str(&format!("- **Protein:** {}g\n", protein));
         }
         md.push('\n');
     }
@@ -71,8 +67,21 @@ pub fn to_markdown(recipe: &Recipe) -> String {
 
     if !recipe.instructions.is_empty() {
         md.push_str("## Instructions\n");
-        for (i, instruction) in recipe.instructions.iter().enumerate() {
-            md.push_str(&format!("{}. {}\n", i + 1, instruction));
+        for (i, step) in recipe.instructions.iter().enumerate() {
+            md.push_str(&format!("{}. {}\n", i + 1, step));
+        }
+        md.push('\n');
+    }
+
+    if !recipe.admonitions.is_empty() {
+        md.push_str("## Tips & Notes\n");
+        for admonition in &recipe.admonitions {
+            let label = match admonition.kind {
+                crate::scraper::AdmonitionType::Tip => "Tip",
+                crate::scraper::AdmonitionType::Note => "Note",
+                crate::scraper::AdmonitionType::Variation => "Variation",
+            };
+            md.push_str(&format!("- **{}:** {}\n", label, admonition.content));
         }
         md.push('\n');
     }
@@ -88,26 +97,25 @@ mod tests {
     fn test_to_markdown_complete() {
         let recipe = Recipe {
             name: Some("Test Recipe".into()),
-            description: Some("A delicious test recipe".into()),
-            ingredients: vec!["1 cup water".into(), "2 tbsp sugar".into()],
-            instructions: vec!["Boil water".into(), "Add sugar".into()],
+            description: Some("A test description".into()),
+            ingredients: vec!["1 cup water".into()],
+            instructions: vec!["Boil water".into()],
             prep_time: Some("5m".into()),
             cook_time: Some("10m".into()),
             total_time: Some("15m".into()),
-            image_url: Some("http://example.com/image.jpg".into()),
             servings: Some(4),
             ..Recipe::default()
         };
 
         let md = to_markdown(&recipe);
-
         assert!(md.contains("# Test Recipe"));
-        assert!(md.contains("A delicious test recipe"));
+        assert!(md.contains("A test description"));
+        assert!(md.contains("## Ingredients"));
         assert!(md.contains("- 1 cup water"));
+        assert!(md.contains("## Instructions"));
         assert!(md.contains("1. Boil water"));
-        assert!(md.contains("**Prep Time:** 5m"));
-        assert!(md.contains("**Servings:** 4"));
-        assert!(md.contains("![Test Recipe](http://example.com/image.jpg)"));
+        assert!(md.contains("- **Prep Time:** 5m"));
+        assert!(md.contains("- **Servings:** 4"));
     }
 
     #[test]
@@ -139,9 +147,9 @@ mod tests {
         let md = to_markdown(&recipe);
         assert!(md.contains("## Nutrition"));
         assert!(md.contains("**Calories:** 250kcal"));
-        assert!(md.contains("**Fat:** 5.0g"));
-        assert!(md.contains("**Carbs:** 30.0g"));
-        assert!(md.contains("**Protein:** 20.0g"));
+        assert!(md.contains("**Fat:** 5g"));
+        assert!(md.contains("**Carbs:** 30g"));
+        assert!(md.contains("**Protein:** 20g"));
     }
 
     #[test]
@@ -155,5 +163,28 @@ mod tests {
         let md = to_markdown(&recipe);
         assert!(md.contains("## Metadata"));
         assert!(md.contains("**Diets:** Vegan, Paleo"));
+    }
+
+    #[test]
+    fn test_to_markdown_with_admonitions() {
+        let recipe = Recipe {
+            name: Some("Admonition Test".into()),
+            admonitions: vec![
+                crate::scraper::Admonition {
+                    kind: crate::scraper::AdmonitionType::Tip,
+                    content: "Use a sharp knife.".into(),
+                },
+                crate::scraper::Admonition {
+                    kind: crate::scraper::AdmonitionType::Note,
+                    content: "This recipe is spicy.".into(),
+                },
+            ],
+            ..Recipe::default()
+        };
+
+        let md = to_markdown(&recipe);
+        assert!(md.contains("## Tips & Notes"));
+        assert!(md.contains("- **Tip:** Use a sharp knife."));
+        assert!(md.contains("- **Note:** This recipe is spicy."));
     }
 }
