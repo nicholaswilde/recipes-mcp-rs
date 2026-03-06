@@ -1,9 +1,9 @@
 # Implementation Plan: Recipe Admonition Extraction
 
 ## Phase 1: Data Modeling
-- [ ] Task: Define `AdmonitionType` enum and `Admonition` struct in `src/scraper.rs`.
-- [ ] Task: Update the `Recipe` struct to include an optional `Vec<Admonition>`.
-- [ ] Task: Conductor - User Manual Verification 'Data Modeling' (Protocol in workflow.md)
+- [x] Task: Define `AdmonitionType` enum and `Admonition` struct in `src/scraper.rs`. (COMPLETED)
+- [x] Task: Update the `Recipe` struct to include an optional `Vec<Admonition>`. (COMPLETED)
+- [x] Task: Conductor - User Manual Verification 'Data Modeling' (Protocol in workflow.md) (COMPLETED)
 
 ## Phase 2: Scraper Enhancement
 - [ ] Task: Update `RecipeSearchProvider` logic or tiered scraping to detect admonition sections in HTML.

@@ -16,6 +16,20 @@ pub enum ScraperError {
     ScrapeFailed(String),
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+pub enum AdmonitionType {
+    Tip,
+    Note,
+    Variation,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct Admonition {
+    pub kind: AdmonitionType,
+    pub content: String,
+}
+
 #[derive(Debug, Serialize, Default, PartialEq, Clone, Deserialize)]
 pub struct Nutrition {
     pub calories: Option<f64>,
@@ -44,6 +58,7 @@ pub struct Recipe {
     pub servings: Option<u32>,
     pub nutrition: Option<Nutrition>,
     pub diets: Vec<String>,
+    pub admonitions: Vec<Admonition>,
 }
 
 impl From<NutritionInformation> for Nutrition {
@@ -104,6 +119,7 @@ impl From<Box<dyn RecipeInformationProvider>> for Recipe {
                 .into_iter()
                 .map(|d| format!("{:?}", d))
                 .collect(),
+            admonitions: vec![],
         }
     }
 }
@@ -154,6 +170,7 @@ impl From<SchemaOrgRecipe> for Recipe {
             servings,
             nutrition: None, // schema-org-recipe might not have this yet
             diets: vec![],
+            admonitions: vec![],
         }
     }
 }
@@ -540,5 +557,18 @@ mod tests {
             preferences: vec![DietaryPreference::Keto],
         };
         assert!(!recipe.matches_filters(&filters_keto));
+    }
+
+    #[test]
+    fn test_admonition_serialization() {
+        let admonition = Admonition {
+            kind: AdmonitionType::Tip,
+            content: "Use cold butter for a flakier crust.".into(),
+        };
+        let json = serde_json::to_string(&admonition).unwrap();
+        assert_eq!(json, r#"{"kind":"tip","content":"Use cold butter for a flakier crust."}"#);
+        
+        let deserialized: Admonition = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized, admonition);
     }
 }
