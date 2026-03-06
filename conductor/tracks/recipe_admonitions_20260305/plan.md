@@ -26,7 +26,7 @@
     - [x] Sub-task: Update `to_markdown` to render the new section. (COMPLETED)
 - [x] Task: Conductor - User Manual Verification 'Output Formatting' (Protocol in workflow.md) (COMPLETED)
 
-## Phase 5: Verification
+## Phase 5: Verification [checkpoint: e5f9e4351be523b7debd5daaf813fc9f543d9f9d]
 - [x] Task: Run integration tests scraping a real or complex mock recipe to verify end-to-end flow. (COMPLETED)
 - [x] Task: Verify that `admonition_types` CLI argument correctly filters output. (COMPLETED)
 - [ ] Task: Conductor - User Manual Verification 'Verification' (Protocol in workflow.md)
