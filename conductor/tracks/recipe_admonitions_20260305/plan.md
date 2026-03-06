@@ -19,7 +19,7 @@
 - [x] Task: Integrate the filtering logic in the handler to only include requested admonition types. (COMPLETED)
 - [x] Task: Conductor - User Manual Verification 'Tool & Handler Integration' (Protocol in workflow.md) (COMPLETED)
 
-## Phase 4: Output Formatting
+## Phase 4: Output Formatting [checkpoint: a07ad14d2ef5da048e2049b137267efb9dfaf39d]
 - [x] Task: Update `src/formatter.rs` to include a "Tips & Notes" section in the Markdown output. (COMPLETED)
 - [x] Task: Implement TDD for formatting: (COMPLETED)
     - [x] Sub-task: Write tests for `to_markdown` with recipes containing different admonitions. (COMPLETED)
