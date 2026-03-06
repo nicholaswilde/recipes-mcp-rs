@@ -6,11 +6,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Fix Search Provider Tests**
-*Link: [./tracks/fix_search_tests_20260305/](./tracks/fix_search_tests_20260305/)*
-
----
-
 - [ ] **Track: Search/Scrape Caching Layer**
 *Link: [./tracks/search_caching_20260305/](./tracks/search_caching_20260305/)*
 
@@ -50,6 +45,11 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link: [./tracks/recipe_sanitization_20260305/](./tracks/recipe_sanitization_20260305/)*
 
 ## Completed Tracks
+
+---
+## [x] Track: Fix Search Provider Tests
+- Link: [fix_search_tests_20260305](./archive/fix_search_tests_20260305/index.md)
+- Description: Restore search provider functionality and add TheMealDB provider.
 
 ---
 ## [x] Track: Recipe Admonition Extraction (Tips & Notes)
