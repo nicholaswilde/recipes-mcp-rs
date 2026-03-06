@@ -1,6 +1,6 @@
 # Implementation Plan: HTTP and SSE Transport Mode Support
 
-## Phase 1: Preparation
+## Phase 1: Preparation [checkpoint: 9e7f8be8dd2f6529ab3c1c026e3fde332fabfc3c]
 - [x] Add `axum`, `tower-http`, and `futures` to `Cargo.toml`.
 - [x] Update `Args` in `src/config.rs` to include a `--transport` flag (default: `stdio`) and optional `--port` (default: `3000`).
 
