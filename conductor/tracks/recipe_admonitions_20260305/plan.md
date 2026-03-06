@@ -1,6 +1,6 @@
 # Implementation Plan: Recipe Admonition Extraction
 
-## Phase 1: Data Modeling
+## Phase 1: Data Modeling [checkpoint: f7d74012584b61504038dcac833244021b1b5168]
 - [x] Task: Define `AdmonitionType` enum and `Admonition` struct in `src/scraper.rs`. (COMPLETED)
 - [x] Task: Update the `Recipe` struct to include an optional `Vec<Admonition>`. (COMPLETED)
 - [x] Task: Conductor - User Manual Verification 'Data Modeling' (Protocol in workflow.md) (COMPLETED)
