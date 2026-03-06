@@ -24,6 +24,7 @@ To provide a robust, automated interface for importing and parsing recipes from 
 - **Recipe Nutrition Estimation:** Automatically estimates calories and macronutrients (Fat, Carbs, Protein) for recipes by analyzing ingredient weights and volumetric conversions.
 - **Advanced Dietary Filtering:** Supports filtering search results and scraped recipes based on dietary preferences such as vegan, vegetarian, gluten-free, and more.
 - **Recipe Admonition Extraction:** Captures and displays recipe-specific tips, notes, and variations to provide users with more comprehensive cooking guidance.
+- **Integrated Caching:** Employs a file-based caching layer for search results and scraped recipes to improve responsiveness and reduce external network overhead.
 - **Granular Parsing:** Accurately identifies and separates recipe components including:
   - Ingredients (quantities, units, items)
   - Preparation and cooking steps
