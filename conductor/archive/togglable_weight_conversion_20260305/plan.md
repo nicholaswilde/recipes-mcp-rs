@@ -1,17 +1,11 @@
-# Implementation Plan: Togglable Weight Conversion
+# Implementation Plan: Prioritized Weight Conversion Matching
 
-## Phase 1: Configuration Update
-- [ ] Add `weight_conversion` field to `Args` struct in `src/config.rs`.
-- [ ] Add `weight_conversion` field to `AppConfig` struct in `src/config.rs`.
-- [ ] Update `AppConfig::load` to correctly prioritize CLI, then env var, then config file.
-- [ ] Set the default value to `true`.
+## Phase 1: Implementation
+- [x] Add "Powdered Sugar" to `standard_entries` in `src/conversion/data.rs`. (COMPLETED)
+- [x] Modify `find_best_match` to sort keys by length descending. (COMPLETED)
 
-## Phase 2: Core Logic and Tool Handlers
-- [ ] Update `scrape_recipe` and `scrape_recipes` in `src/scraper.rs` to only call `convert_ingredients` if enabled.
-- [ ] Update the `manage_recipes` tool's `scale` and `format` actions in `src/main.rs` to respect the toggle.
-- [ ] Ensure `convert_ingredients` tool remains functional (it is an explicit call).
-
-## Phase 3: Testing and Verification
-- [ ] Add tests in `src/config.rs` to verify the setting is loaded correctly from different sources.
-- [ ] Add unit tests for the toggled behavior in `src/scraper.rs`.
-- [ ] Verify manually via CLI arguments.
+## Phase 2: Testing & Verification
+- [x] Add `test_find_best_match_prioritize_longer` to `src/conversion/data.rs`. (COMPLETED)
+- [x] Add `test_find_best_match_prioritize_longer_partial` to `src/conversion/data.rs`. (COMPLETED)
+- [x] Add `test_format_powdered_sugar` to `src/conversion/engine.rs` for integration verification. (COMPLETED)
+- [x] Run unit tests and verify all pass. (COMPLETED)

@@ -51,6 +51,10 @@ impl WeightChart {
                 grams_per_cup: 213.0,
             },
             IngredientWeight {
+                name: "Powdered Sugar".into(),
+                grams_per_cup: 120.0,
+            },
+            IngredientWeight {
                 name: "Butter".into(),
                 grams_per_cup: 227.0,
             },
@@ -107,20 +111,25 @@ impl WeightChart {
         }
 
         // 3. Try partial match (if the chart name contains the input, or vice versa)
-        for (chart_name, entry) in &self.data {
+        // Sort by length descending to find the most specific (longest) match first
+        let mut data_keys: Vec<_> = self.data.keys().collect();
+        data_keys.sort_by_key(|k| std::cmp::Reverse(k.len()));
+        for chart_name in data_keys {
             if chart_name.contains(&name_lower) || name_lower.contains(chart_name) {
-                return Some(entry);
+                return self.data.get(chart_name);
             }
         }
 
         // 4. Try alias as substring
-        if let Some(entry) = self
-            .aliases
-            .iter()
-            .filter(|(alias, _)| name_lower.contains(*alias))
-            .find_map(|(_, target)| self.data.get(target))
-        {
-            return Some(entry);
+        // Sort by length descending to find the most specific (longest) alias first
+        let mut alias_keys: Vec<_> = self.aliases.keys().collect();
+        alias_keys.sort_by_key(|k| std::cmp::Reverse(k.len()));
+        for alias in alias_keys {
+            if name_lower.contains(alias) {
+                if let Some(target) = self.aliases.get(alias) {
+                    return self.data.get(target);
+                }
+            }
         }
 
         None
@@ -170,5 +179,23 @@ mod tests {
         let chart = WeightChart::new();
         let flour = chart.find_best_match("white flour").unwrap();
         assert_eq!(flour.name, "All-Purpose Flour");
+    }
+
+    #[test]
+    fn test_find_best_match_prioritize_longer() {
+        let chart = WeightChart::new();
+        // "powdered sugar" should match "Powdered Sugar" (120g) 
+        // even though "sugar" is an alias for "Granulated Sugar" (198g)
+        let sugar = chart.find_best_match("powdered sugar").unwrap();
+        assert_eq!(sugar.name, "Powdered Sugar");
+    }
+
+    #[test]
+    fn test_find_best_match_prioritize_longer_partial() {
+        let chart = WeightChart::new();
+        // "heavy powdered sugar" should match "Powdered Sugar" (120g) 
+        // even though it contains "sugar" (alias for "Granulated Sugar" 198g)
+        let sugar = chart.find_best_match("heavy powdered sugar").unwrap();
+        assert_eq!(sugar.name, "Powdered Sugar");
     }
 }

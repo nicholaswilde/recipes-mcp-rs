@@ -77,4 +77,17 @@ mod tests {
         let chart = WeightChart::new();
         assert!(convert_to_weight("1 cup Unicorn Dust", &chart).is_none());
     }
+
+    #[test]
+    fn test_format_powdered_sugar() {
+        let chart = WeightChart::new();
+        // "powdered sugar" should match "Powdered Sugar" (120g)
+        // instead of "Granulated Sugar" (198g) via "sugar" alias.
+        let formatted = format_with_weight("1 cup powdered sugar", &chart);
+        assert_eq!(formatted, "1 cup (120g) powdered sugar");
+        
+        // "sugar" should still match "Granulated Sugar" (198g)
+        let formatted_plain = format_with_weight("1 cup sugar", &chart);
+        assert_eq!(formatted_plain, "1 cup (198g) sugar");
+    }
 }

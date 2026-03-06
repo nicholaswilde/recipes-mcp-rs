@@ -1,6 +1,11 @@
 {
-  "id": "togglable_weight_conversion_20260305",
-  "title": "Togglable Weight Conversion",
-  "description": "Allow enabling/disabling automatic weight conversion via CLI, config, or environment variables.",
-  "status": "completed"
+  "track_id": "togglable_weight_conversion_20260305",
+  "title": "Prioritized Weight Conversion Matching",
+  "description": "Improve accuracy by prioritizing longer ingredient names in weight conversion matching.",
+  "status": "completed",
+  "category": "core",
+  "priority": "minor",
+  "created_at": "2026-03-05T10:00:00Z",
+  "started_at": "2026-03-05T10:00:00Z",
+  "completed_at": "2026-03-05T10:30:00Z"
 }

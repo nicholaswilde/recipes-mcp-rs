@@ -1,10 +1,5 @@
-# Track: Togglable Weight Conversion
+# Prioritized Weight Conversion Matching
 
-## Overview
-This track introduces the ability to enable or disable automatic ingredient weight conversion through the Recipes MCP Server's configuration system.
-
-## Specifications
-- [Spec: Togglable Weight Conversion](./spec.md)
-
-## Implementation Plan
-- [Plan: Togglable Weight Conversion](./plan.md)
+- [Specification](./spec.md)
+- [Implementation Plan](./plan.md)
+- [Metadata](./metadata.json)
