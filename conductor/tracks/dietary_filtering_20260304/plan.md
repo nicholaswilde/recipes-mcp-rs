@@ -14,8 +14,8 @@
 - [x] Update the `search` and `scrape` tool handlers in `src/main.rs`. (COMPLETED)
 
 ## Phase 4: Testing
-- [ ] Test filtering behavior for `vegan` and `gluten-free`.
-- [ ] Test formatting when dietary info is present.
+- [x] Test filtering behavior for `vegan` and `gluten-free`. (COMPLETED)
+- [x] Test formatting when dietary info is present. (COMPLETED)
 
 ## Phase 5: Verification
 - [ ] Verify the tool only returns recipes that meet the specified filters.
