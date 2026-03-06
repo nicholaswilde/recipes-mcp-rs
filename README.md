@@ -123,3 +123,9 @@ task test:ci
 ## :page_facing_up: License
 
 This project is licensed under the Apache License 2.0. See the `LICENSE` file for details.
+
+## :writing_hand: Author
+
+This project was started in 2026 by [Nicholas Wilde][2].
+
+[2]: <https://github.com/nicholaswilde/>
