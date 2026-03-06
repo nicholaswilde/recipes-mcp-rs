@@ -380,7 +380,7 @@ pub async fn handle_request(
                             };
                             let limit = args.limit.unwrap_or(5);
                             let provider = args.provider.unwrap_or_default();
-                            let results = search::search_recipes(&query, limit, provider, dietary_filters).await;
+                            let results = search::search_recipes(&query, limit, provider, dietary_filters, None).await;
                             match results {
                                 Ok(res) => Response {
                                     jsonrpc: JSONRPC_VERSION.into(),

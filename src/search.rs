@@ -3,6 +3,7 @@ use reqwest::header::USER_AGENT;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
+use std::sync::Arc;
 use crate::dietary::{DietaryPreference, DietaryFilters};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -382,7 +383,15 @@ pub async fn search_recipes(
     limit: u32,
     provider: RecipeProvider,
     filters: DietaryFilters,
+    cache: Option<Arc<dyn crate::cache::RecipeCache>>,
 ) -> Result<Vec<SearchResult>, ScraperError> {
+    if let Some(c) = &cache {
+        if let Some(results) = c.get_search_results(query, limit, &provider, &filters).await {
+            tracing::info!("Cache hit for search: {}", query);
+            return Ok(results);
+        }
+    }
+
     let p: Box<dyn RecipeSearchProvider> = match provider {
         RecipeProvider::AllRecipes => Box::new(AllRecipesProvider),
         RecipeProvider::FoodNetwork => Box::new(FoodNetworkProvider),
@@ -398,6 +407,10 @@ pub async fn search_recipes(
         .take(limit as usize)
         .collect();
 
+    if let Some(c) = &cache {
+        c.set_search_results(query, limit, &provider, &filters, filtered.clone(), std::time::Duration::from_secs(24 * 3600)).await;
+    }
+
     Ok(filtered)
 }
 
@@ -407,7 +420,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_search_recipes_not_empty() {
-        let res = search_recipes("lasagna", 5, RecipeProvider::AllRecipes, DietaryFilters::default()).await;
+        let res = search_recipes("lasagna", 5, RecipeProvider::AllRecipes, DietaryFilters::default(), None).await;
         match res {
             Ok(results) => {
                 assert!(!results.is_empty(), "AllRecipes results should not be empty");
@@ -423,7 +436,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_search_food_network() {
-        let res = search_recipes("lasagna", 5, RecipeProvider::FoodNetwork, DietaryFilters::default()).await;
+        let res = search_recipes("lasagna", 5, RecipeProvider::FoodNetwork, DietaryFilters::default(), None).await;
         match res {
             Ok(results) => {
                 assert!(!results.is_empty(), "FoodNetwork results should not be empty");
@@ -438,7 +451,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_search_serious_eats() {
-        let res = search_recipes("lasagna", 5, RecipeProvider::SeriousEats, DietaryFilters::default()).await;
+        let res = search_recipes("lasagna", 5, RecipeProvider::SeriousEats, DietaryFilters::default(), None).await;
         match res {
             Ok(results) => {
                 assert!(!results.is_empty(), "SeriousEats results should not be empty");
@@ -453,10 +466,31 @@ mod tests {
 
     #[tokio::test]
     async fn test_search_themealdb() {
-        let res = search_recipes("lasagna", 5, RecipeProvider::TheMealDB, DietaryFilters::default()).await
+        let res = search_recipes("lasagna", 5, RecipeProvider::TheMealDB, DietaryFilters::default(), None).await
             .expect("TheMealDB search failed");
         assert!(!res.is_empty(), "TheMealDB results should not be empty");
         assert!(res[0].url.contains("themealdb.com"));
+    }
+
+    #[tokio::test]
+    async fn test_search_recipes_caching() {
+        let _ = tracing_subscriber::fmt().with_max_level(tracing::Level::INFO).with_test_writer().try_init();
+        use tempfile::tempdir;
+        let dir = tempdir().unwrap();
+        let cache = Arc::new(crate::cache::FileRecipeCache::new(dir.path().to_path_buf()));
+        
+        let query = "pizza";
+        let limit = 1;
+        let provider = RecipeProvider::TheMealDB;
+        let filters = DietaryFilters::default();
+        
+        // First call - should populate cache
+        let res1 = search_recipes(query, limit, provider.clone(), filters.clone(), Some(cache.clone())).await.unwrap();
+        
+        // Second call - should hit cache
+        let res2 = search_recipes(query, limit, provider, filters, Some(cache)).await.unwrap();
+        
+        assert_eq!(res1, res2);
     }
 
     #[test]

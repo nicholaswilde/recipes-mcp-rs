@@ -7,10 +7,10 @@
 - [x] Task: Conductor - User Manual Verification 'Architecture & Data Structures'
 
 ## Phase 2: Search Caching Integration
-- [ ] Task: Update `search_recipes` in `src/search.rs` to check the cache before making requests.
-- [ ] Task: Update `search_recipes` to store successful results in the cache.
-- [ ] Task: Add unit tests for search caching.
-- [ ] Task: Conductor - User Manual Verification 'Search Caching Integration'
+- [x] Task: Update `search_recipes` in `src/search.rs` to check the cache before making requests.
+- [x] Task: Update `search_recipes` to store successful results in the cache.
+- [x] Task: Add unit tests for search caching.
+- [~] Task: Conductor - User Manual Verification 'Search Caching Integration'
 
 ## Phase 3: Scrape Caching Integration
 - [ ] Task: Update `scrape_recipe` in `src/scraper.rs` to check the cache before making requests.
