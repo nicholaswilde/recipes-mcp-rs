@@ -9,9 +9,9 @@
 - [x] Update `scrape_recipes` to optionally filter out non-compliant recipes. (COMPLETED)
 
 
-## Phase 3: Integration
+## Phase 3: Integration [checkpoint: 27bc93696ab166fdb9d46b75b7b485ed565d179a]
 - [x] Surface dietary metadata in the `formatter`. (COMPLETED)
-- [~] Update the `search` and `scrape` tool handlers in `src/main.rs`.
+- [x] Update the `search` and `scrape` tool handlers in `src/main.rs`. (COMPLETED)
 
 ## Phase 4: Testing
 - [ ] Test filtering behavior for `vegan` and `gluten-free`.
