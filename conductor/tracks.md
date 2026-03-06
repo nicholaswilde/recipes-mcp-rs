@@ -9,6 +9,46 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: Fix Search Provider Tests**
 *Link: [./tracks/fix_search_tests_20260305/](./tracks/fix_search_tests_20260305/)*
 
+---
+
+- [ ] **Track: Search/Scrape Caching Layer**
+*Link: [./tracks/search_caching_20260305/](./tracks/search_caching_20260305/)*
+
+---
+
+- [ ] **Track: Metric/Imperial Volume Conversion**
+*Link: [./tracks/volume_conversion_20260305/](./tracks/volume_conversion_20260305/)*
+
+---
+
+- [ ] **Track: Cooklang Export Support**
+*Link: [./tracks/cooklang_export_20260305/](./tracks/cooklang_export_20260305/)*
+
+---
+
+- [ ] **Track: Additional Recipe Search Providers**
+*Link: [./tracks/extra_search_providers_20260305/](./tracks/extra_search_providers_20260305/)*
+
+---
+
+- [ ] **Track: Advanced Image and Gallery Extraction**
+*Link: [./tracks/advanced_image_extraction_20260305/](./tracks/advanced_image_extraction_20260305/)*
+
+---
+
+- [ ] **Track: External Nutrition API Integration**
+*Link: [./tracks/external_nutrition_api_20260305/](./tracks/external_nutrition_api_20260305/)*
+
+---
+
+- [ ] **Track: Interactive CLI Mode**
+*Link: [./tracks/interactive_cli_mode_20260305/](./tracks/interactive_cli_mode_20260305/)*
+
+---
+
+- [ ] **Track: Recipe Content Sanitization**
+*Link: [./tracks/recipe_sanitization_20260305/](./tracks/recipe_sanitization_20260305/)*
+
 ## Completed Tracks
 
 ---
