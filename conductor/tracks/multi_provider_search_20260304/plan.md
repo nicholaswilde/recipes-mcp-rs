@@ -15,8 +15,8 @@
 - [x] Update the `search` action handler in `src/main.rs`. (COMPLETED)
 
 ## Phase 4: Testing
-- [ ] Add integration tests for searching each provider.
-- [ ] Test the default provider behavior (AllRecipes).
+- [x] Add integration tests for searching each provider. (COMPLETED)
+- [x] Test the default provider behavior (AllRecipes). (COMPLETED)
 
 ## Phase 5: Verification
 - [ ] Verify search results are returned from multiple providers.
