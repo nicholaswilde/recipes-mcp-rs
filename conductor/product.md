@@ -20,6 +20,7 @@ To provide a robust, automated interface for importing and parsing recipes from 
 - **Volumetric to Weight Conversion:** Automatically converts volumetric measurements (cups, tbsp, tsp) to gram weights using the King Arthur ingredient weight chart for improved baking accuracy.
 - **Multi-Format Export:** Enables exporting scraped recipes into various human-readable formats, such as Markdown, for seamless integration into personal knowledge bases.
 - **Recipe Discovery:** Integrated search functionality allows users to find recipe URLs based on key terms from supported providers (e.g., AllRecipes).
+- **Flexible Transport Modes:** Supports both `stdio` and `HTTP/SSE` (Server-Sent Events) for seamless integration with a wide variety of MCP clients and host environments.
 - **Granular Parsing:** Accurately identifies and separates recipe components including:
   - Ingredients (quantities, units, items)
   - Preparation and cooking steps
