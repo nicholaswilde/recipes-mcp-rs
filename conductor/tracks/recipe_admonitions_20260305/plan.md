@@ -13,7 +13,7 @@
     - [x] Sub-task: Verify tests pass. (COMPLETED)
 - [x] Task: Conductor - User Manual Verification 'Scraper Enhancement' (Protocol in workflow.md) (COMPLETED)
 
-## Phase 3: Tool & Handler Integration
+## Phase 3: Tool & Handler Integration [checkpoint: fbc44153f4b554c7f3c00dc8ec711ebee485f6e8]
 - [x] Task: Update `ManageRecipesArgs` in `src/handler.rs` to include `admonition_types`. (COMPLETED)
 - [x] Task: Update the `manage_recipes` tool definition in `src/handler.rs`. (COMPLETED)
 - [x] Task: Integrate the filtering logic in the handler to only include requested admonition types. (COMPLETED)
