@@ -1,10 +1,10 @@
 # Implementation Plan: Search/Scrape Caching Layer
 
-## Phase 1: Architecture & Data Structures
+## Phase 1: Architecture & Data Structures [checkpoint: a9db762e01e1a4532aba4401adb847d1e923a323]
 - [x] Task: Create `src/cache.rs` and define `CacheEntry<T>` struct with TTL support.
 - [x] Task: Define `RecipeCache` trait with methods for getting and setting search and scrape results.
 - [x] Task: Implement `FileRecipeCache` using `serde_json` for persistence.
-- [~] Task: Conductor - User Manual Verification 'Architecture & Data Structures'
+- [x] Task: Conductor - User Manual Verification 'Architecture & Data Structures'
 
 ## Phase 2: Search Caching Integration
 - [ ] Task: Update `search_recipes` in `src/search.rs` to check the cache before making requests.
