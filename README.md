@@ -7,9 +7,13 @@ An MCP server written in Rust for importing, parsing, scaling, formatting, and s
 - **Intelligent Web Scraping:** Extracts recipes from a wide variety of online sources using a tiered strategy with `rust-recipe` and `recipe-scraper`.
 - **Recipe Scaling:** Adjust servings for any recipe, automatically scaling ingredient quantities.
 - **Weight Conversion:** Automatically converts volumetric measurements (cups, tbsp, tsp) to gram weights using the [King Arthur Baking ingredient weight chart](https://www.kingarthurbaking.com/learn/ingredient-weight-chart).
+- **Nutrition Estimation:** Automatically estimates calories and macronutrients (Fat, Carbs, Protein) for recipes based on ingredient weights.
+- **Dietary Filtering:** Filter search results and scraped recipes based on dietary preferences (e.g., vegan, gluten-free).
+- **Admonition Extraction:** Captures recipe-specific tips, notes, and variations.
 - **Standalone Conversion Tool:** Quickly convert a list of ingredient strings into weighted equivalents.
 - **Multi-Format Export:** Supports exporting recipes to Markdown and JSON.
-- **Recipe Discovery:** Integrated search functionality to find recipe URLs from supported providers (e.g., AllRecipes).
+- **Recipe Discovery:** Integrated search functionality to find recipe URLs from supported providers (AllRecipes, Food Network, Serious Eats).
+- **Flexible Transport:** Supports both `stdio` and `HTTP/SSE` (Server-Sent Events) transport modes.
 - **Flexible Configuration:** Supports TOML, YAML, and JSON configuration files, as well as environment variables and command-line arguments.
 
 ## :package: Installation
@@ -40,7 +44,8 @@ The server can be configured via environment variables, command-line arguments, 
 | Option | Environment Variable | CLI Argument | Default |
 |--------|----------------------|--------------|---------|
 | Log Level | `RECIPES__LOG_LEVEL` | `--log-level` | `info` |
-| MCP Transport | `RECIPES__MCP_TRANSPORT` | `--mcp-transport` | `stdio` |
+| Transport | `RECIPES__TRANSPORT` | `--transport` | `stdio` |
+| Port | `RECIPES__PORT` | `--port` | `3000` |
 | Weight Conversion | `RECIPES__WEIGHT_CONVERSION` | `--weight-conversion` | `true` |
 
 ### :wrench: MCP Tools
@@ -52,13 +57,16 @@ The server provides several tools for recipe management and ingredient processin
 Unified tool for complex recipe operations.
 
 **Arguments:**
-- `action` (required): `scrape`, `scale`, `format`, or `search`.
-- `urls`: List of recipe URLs to scrape (required for `scrape`, optional for `scale`/`format`).
-- `recipes`: List of recipe objects to scale or format (required if `urls` not provided).
-- `target_servings`: Desired number of servings (required for `scale`).
+- `action` (required): `scrape`, `scale`, `format`, `search`, or `nutrition`.
+- `urls`: List of recipe URLs to scrape (required for `scrape`, optional for `scale`/`format`/`nutrition`).
+- `recipes`: List of recipe objects to scale, format, or analyze (required if `urls` not provided).
+- `target_servings`: Desired number of servings (required for `scale`, optional for others).
 - `format_type`: Output format (`markdown` or `json`, defaults to `markdown`).
 - `query`: Search query (required for `search`).
 - `limit`: Maximum search results (optional for `search`, default 5).
+- `provider`: Recipe provider to search (`allrecipes`, `foodnetwork`, `seriouseats`).
+- `dietary_filters`: List of dietary preferences (`vegan`, `vegetarian`, `gluten-free`, `dairy-free`, `keto`, `paleo`).
+- `admonition_types`: List of admonition types to extract (`tip`, `note`, `variation`).
 
 #### `convert_ingredients`
 
