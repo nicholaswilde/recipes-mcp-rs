@@ -4,7 +4,7 @@
 - [x] Add `axum`, `tower-http`, and `futures` to `Cargo.toml`.
 - [x] Update `Args` in `src/config.rs` to include a `--transport` flag (default: `stdio`) and optional `--port` (default: `3000`).
 
-## Phase 2: Refactoring
+## Phase 2: Refactoring [checkpoint: 18b1f29938c8cf9844b7a2436c0547ccc4908425]
 - [x] Abstract the request handling logic in `src/main.rs` into a standalone function or module if needed to be reused between stdio and HTTP.
 - [x] Move tool implementation to a more modular structure if necessary for clarity.
 
