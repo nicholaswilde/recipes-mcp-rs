@@ -13,9 +13,9 @@
 - [x] Update the action handler in `src/main.rs`. (COMPLETED)
 - [x] Update the `formatter` to include a nutrition table. (COMPLETED)
 
-## Phase 4: Testing
+## Phase 4: Testing [checkpoint: 54a01b6d3f0672bd2448ad9713b262967c2e291f]
 - [x] Unit test the calculation logic for a simple recipe. (COMPLETED)
-- [~] Verify handling of multiple servings.
+- [x] Verify handling of multiple servings. (COMPLETED)
 
 ## Phase 5: Verification
 - [ ] Verify the estimated nutritional values are consistent with the ingredient weights.
