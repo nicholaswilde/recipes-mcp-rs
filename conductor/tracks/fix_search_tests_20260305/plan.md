@@ -1,8 +1,8 @@
 # Implementation Plan: Fix Search Provider Tests
 
 ## Phase 1: Research & Debugging
-- [ ] Task: Add temporary debug logging to `src/search.rs` to capture HTML content from each provider.
-- [ ] Task: Execute search tests and analyze the output to identify new selectors.
+- [x] Task: Add temporary debug logging to `src/search.rs` to capture HTML content from each provider.
+- [x] Task: Execute search tests and analyze the output to identify new selectors and header improvements.
 - [ ] Task: Conductor - User Manual Verification 'Research & Debugging' (Protocol in workflow.md)
 
 ## Phase 2: AllRecipes Fix
@@ -33,3 +33,8 @@
 - [ ] Task: Clean up debug logging and add structured `tracing` events.
 - [ ] Task: Improve error reporting for blocked requests vs. empty results.
 - [ ] Task: Conductor - User Manual Verification 'Robustness & Logging' (Protocol in workflow.md)
+
+## Phase 6: New Provider - TheMealDB
+- [ ] Task: Implement `TheMealDBProvider` using their JSON API.
+- [ ] Task: Add tests for `TheMealDBProvider`.
+- [ ] Task: Conductor - User Manual Verification 'TheMealDB Fix' (Protocol in workflow.md)
