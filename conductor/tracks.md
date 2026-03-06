@@ -6,11 +6,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Cooklang Export Support**
-*Link: [./tracks/cooklang_export_20260305/](./tracks/cooklang_export_20260305/)*
-
----
-
 - [ ] **Track: Additional Recipe Search Providers**
 *Link: [./tracks/extra_search_providers_20260305/](./tracks/extra_search_providers_20260305/)*
 
@@ -35,6 +30,11 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link: [./tracks/recipe_sanitization_20260305/](./tracks/recipe_sanitization_20260305/)*
 
 ## Completed Tracks
+
+---
+## [x] Track: Cooklang Export Support
+- Link: [cooklang_export_20260305](./archive/cooklang_export_20260305/plan.md)
+- Description: Add support for exporting recipes in Cooklang format.
 
 ---
 ## [x] Track: Search/Scrape Caching Layer
