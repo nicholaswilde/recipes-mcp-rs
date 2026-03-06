@@ -1,4 +1,4 @@
-# :stew: Recipes MCP Server
+# :stew: Recipes MCP Server :robot:
 
 An MCP server written in Rust for importing, parsing, scaling, formatting, and searching recipes from the internet.
 
