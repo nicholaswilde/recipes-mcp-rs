@@ -14,10 +14,10 @@
 - [x] Task: Conductor - User Manual Verification 'Scraper Enhancement' (Protocol in workflow.md) (COMPLETED)
 
 ## Phase 3: Tool & Handler Integration
-- [ ] Task: Update `ManageRecipesArgs` in `src/handler.rs` to include `admonition_types`.
-- [ ] Task: Update the `manage_recipes` tool definition in `src/handler.rs`.
-- [ ] Task: Integrate the filtering logic in the handler to only include requested admonition types.
-- [ ] Task: Conductor - User Manual Verification 'Tool & Handler Integration' (Protocol in workflow.md)
+- [x] Task: Update `ManageRecipesArgs` in `src/handler.rs` to include `admonition_types`. (COMPLETED)
+- [x] Task: Update the `manage_recipes` tool definition in `src/handler.rs`. (COMPLETED)
+- [x] Task: Integrate the filtering logic in the handler to only include requested admonition types. (COMPLETED)
+- [x] Task: Conductor - User Manual Verification 'Tool & Handler Integration' (Protocol in workflow.md) (COMPLETED)
 
 ## Phase 4: Output Formatting
 - [ ] Task: Update `src/formatter.rs` to include a "Tips & Notes" section in the Markdown output.

@@ -1,7 +1,7 @@
 use mcp_sdk_rs::protocol::{JSONRPC_VERSION, Request, Response, ResponseError};
 use crate::conversion::data::WeightChart;
 use crate::formatter;
-use crate::scraper::{Recipe, scrape_recipes, ScraperError};
+use crate::scraper::{Recipe, scrape_recipes, ScraperError, AdmonitionType};
 use crate::search;
 use crate::nutrition::NutritionChart;
 use crate::dietary::{DietaryPreference, DietaryFilters};
@@ -21,6 +21,7 @@ pub struct ManageRecipesArgs {
     pub limit: Option<u32>,
     pub provider: Option<search::RecipeProvider>,
     pub dietary_filters: Option<Vec<DietaryPreference>>,
+    pub admonition_types: Option<Vec<AdmonitionType>>,
 }
 
 pub async fn handle_request(
@@ -103,6 +104,14 @@ pub async fn handle_request(
                                             "enum": ["vegan", "vegetarian", "gluten-free", "dairy-free", "keto", "paleo"]
                                         },
                                         "description": "List of dietary preferences to filter by (optional)"
+                                    },
+                                    "admonition_types": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "enum": ["tip", "note", "variation"]
+                                        },
+                                        "description": "List of admonition types to extract (optional, default: all)"
                                     }
                                 },
                                 "required": ["action"]
@@ -153,6 +162,8 @@ pub async fn handle_request(
                         preferences: args.dietary_filters.clone().unwrap_or_default(),
                     };
 
+                    let admonition_types = args.admonition_types.clone();
+
                     match args.action.as_str() {
                         "scrape" => {
                             let urls = args.urls.unwrap_or_default();
@@ -163,11 +174,15 @@ pub async fn handle_request(
                                 .into_iter()
                                 .map(|(url, res)| {
                                     let filtered_res = match res {
-                                        Ok(recipe) => {
-                                            if recipe.matches_filters(&dietary_filters) {
-                                                Ok(recipe)
-                                            } else {
+                                        Ok(mut recipe) => {
+                                            if !recipe.matches_filters(&dietary_filters) {
                                                 Err(ScraperError::ScrapeFailed("Recipe does not match dietary filters".into()))
+                                            } else {
+                                                // Filter admonitions
+                                                if let Some(types) = &admonition_types {
+                                                    recipe.admonitions.retain(|a| types.contains(&a.kind));
+                                                }
+                                                Ok(recipe)
                                             }
                                         },
                                         Err(e) => Err(e),
@@ -211,9 +226,23 @@ pub async fn handle_request(
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
                                     .filter(|r| r.matches_filters(&dietary_filters))
+                                    .map(|mut r| {
+                                        if let Some(types) = &admonition_types {
+                                            r.admonitions.retain(|a| types.contains(&a.kind));
+                                        }
+                                        r
+                                    })
                                     .collect()
                             } else if let Some(recipes) = args.recipes {
-                                recipes.into_iter().filter(|r| r.matches_filters(&dietary_filters)).collect()
+                                recipes.into_iter()
+                                    .filter(|r| r.matches_filters(&dietary_filters))
+                                    .map(|mut r| {
+                                        if let Some(types) = &admonition_types {
+                                            r.admonitions.retain(|a| types.contains(&a.kind));
+                                        }
+                                        r
+                                    })
+                                    .collect()
                             } else {
                                 return Response {
                                     jsonrpc: JSONRPC_VERSION.into(),
@@ -257,9 +286,23 @@ pub async fn handle_request(
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
                                     .filter(|r| r.matches_filters(&dietary_filters))
+                                    .map(|mut r| {
+                                        if let Some(types) = &admonition_types {
+                                            r.admonitions.retain(|a| types.contains(&a.kind));
+                                        }
+                                        r
+                                    })
                                     .collect()
                             } else if let Some(recipes) = args.recipes {
-                                recipes.into_iter().filter(|r| r.matches_filters(&dietary_filters)).collect()
+                                recipes.into_iter()
+                                    .filter(|r| r.matches_filters(&dietary_filters))
+                                    .map(|mut r| {
+                                        if let Some(types) = &admonition_types {
+                                            r.admonitions.retain(|a| types.contains(&a.kind));
+                                        }
+                                        r
+                                    })
+                                    .collect()
                             } else {
                                 return Response {
                                     jsonrpc: JSONRPC_VERSION.into(),
@@ -371,9 +414,23 @@ pub async fn handle_request(
                                     .into_values()
                                     .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
                                     .filter(|r| r.matches_filters(&dietary_filters))
+                                    .map(|mut r| {
+                                        if let Some(types) = &admonition_types {
+                                            r.admonitions.retain(|a| types.contains(&a.kind));
+                                        }
+                                        r
+                                    })
                                     .collect()
                             } else if let Some(recipes) = args.recipes {
-                                recipes.into_iter().filter(|r| r.matches_filters(&dietary_filters)).collect()
+                                recipes.into_iter()
+                                    .filter(|r| r.matches_filters(&dietary_filters))
+                                    .map(|mut r| {
+                                        if let Some(types) = &admonition_types {
+                                            r.admonitions.retain(|a| types.contains(&a.kind));
+                                        }
+                                        r
+                                    })
+                                    .collect()
                             } else {
                                 return Response {
                                     jsonrpc: JSONRPC_VERSION.into(),
@@ -542,6 +599,7 @@ mod tests {
         
         let props = manage_recipes["inputSchema"]["properties"].as_object().unwrap();
         assert!(props.contains_key("dietary_filters"));
+        assert!(props.contains_key("admonition_types"));
         
         assert!(tools.iter().any(|t| t["name"] == "convert_ingredients"));
     }
