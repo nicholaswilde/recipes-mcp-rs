@@ -9,9 +9,9 @@
 - [x] Handle missing nutritional data gracefully. (COMPLETED)
 
 ## Phase 3: Integration
-- [ ] Add the `nutrition` action to the `manage_recipes` tool.
-- [ ] Update the action handler in `src/main.rs`.
-- [ ] Update the `formatter` to include a nutrition table.
+- [x] Add the `nutrition` action to the `manage_recipes` tool. (COMPLETED)
+- [x] Update the action handler in `src/main.rs`. (COMPLETED)
+- [~] Update the `formatter` to include a nutrition table.
 
 ## Phase 4: Testing
 - [ ] Unit test the calculation logic for a simple recipe.

@@ -3,6 +3,7 @@ use crate::conversion::data::WeightChart;
 use crate::formatter;
 use crate::scraper::{Recipe, scrape_recipes, ScraperError};
 use crate::search;
+use crate::nutrition::NutritionChart;
 use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
@@ -57,7 +58,7 @@ pub async fn handle_request(
                                 "properties": {
                                     "action": {
                                         "type": "string",
-                                        "enum": ["scrape", "scale", "format", "search"],
+                                        "enum": ["scrape", "scale", "format", "search", "nutrition"],
                                         "description": "The action to perform"
                                     },
                                     "urls": {
@@ -321,6 +322,54 @@ pub async fn handle_request(
                                 },
                             }
                         }
+                        "nutrition" => {
+                            let recipes_to_analyze: Vec<Recipe> = if let Some(urls) = args.urls {
+                                let results: HashMap<String, Result<Recipe, ScraperError>> = scrape_recipes(urls, &weight_chart, weight_conversion_enabled).await;
+                                results
+                                    .into_values()
+                                    .filter_map(|r: Result<Recipe, ScraperError>| r.ok())
+                                    .collect()
+                            } else if let Some(recipes) = args.recipes {
+                                recipes
+                            } else {
+                                return Response {
+                                    jsonrpc: JSONRPC_VERSION.into(),
+                                    id,
+                                    result: None,
+                                    error: Some(ResponseError {
+                                        code: -32602,
+                                        message: "Either 'urls' or 'recipes' must be provided for 'nutrition' action"
+                                            .into(),
+                                        data: None,
+                                    }),
+                                };
+                            };
+
+                            let nutrition_chart = NutritionChart::new();
+                            let mut results = HashMap::new();
+
+                            for mut recipe in recipes_to_analyze {
+                                if let Some(target) = args.target_servings {
+                                    recipe.scale(target);
+                                }
+                                recipe.calculate_nutrition(&weight_chart, &nutrition_chart);
+                                results.insert(recipe.name.clone().unwrap_or_default(), recipe.nutrition.clone());
+                            }
+
+                            Response {
+                                jsonrpc: JSONRPC_VERSION.into(),
+                                id,
+                                result: Some(json!({
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": serde_json::to_string_pretty(&results).unwrap()
+                                        }
+                                    ]
+                                })),
+                                error: None,
+                            }
+                        }
                         _ => Response {
                             jsonrpc: JSONRPC_VERSION.into(),
                             id,
@@ -444,7 +493,9 @@ mod tests {
         assert_eq!(resp.id, RequestId::Number(1));
         let result = resp.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
-        assert!(tools.iter().any(|t| t["name"] == "manage_recipes"));
+        let manage_recipes = tools.iter().find(|t| t["name"] == "manage_recipes").unwrap();
+        let actions = manage_recipes["inputSchema"]["properties"]["action"]["enum"].as_array().unwrap();
+        assert!(actions.iter().any(|a| a == "nutrition"));
         assert!(tools.iter().any(|t| t["name"] == "convert_ingredients"));
     }
 }

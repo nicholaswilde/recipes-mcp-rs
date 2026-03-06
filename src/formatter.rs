@@ -121,4 +121,26 @@ mod tests {
         assert!(md.contains("# Minimal Recipe"));
         assert!(!md.contains("**Prep Time:**"));
     }
+
+    #[test]
+    fn test_to_markdown_with_nutrition() {
+        let recipe = Recipe {
+            name: Some("Healthy Recipe".into()),
+            nutrition: Some(crate::scraper::Nutrition {
+                calories: Some(250.0),
+                fat_grams: Some(5.0),
+                carbohydrate_grams: Some(30.0),
+                protein_grams: Some(20.0),
+                ..Default::default()
+            }),
+            ..Recipe::default()
+        };
+
+        let md = to_markdown(&recipe);
+        assert!(md.contains("## Nutrition"));
+        assert!(md.contains("**Calories:** 250kcal"));
+        assert!(md.contains("**Fat:** 5.0g"));
+        assert!(md.contains("**Carbs:** 30.0g"));
+        assert!(md.contains("**Protein:** 20.0g"));
+    }
 }

@@ -1,5 +1,6 @@
 use recipe_scraper::{Extract, SchemaOrgEntry, SchemaOrgRecipe, Scrape};
 use rust_recipe::{NutritionInformation, RecipeInformationProvider};
+use crate::nutrition::{NutritionalInfo, NutritionChart, calculate_nutrition};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
@@ -16,12 +17,12 @@ pub enum ScraperError {
 
 #[derive(Debug, Serialize, Default, PartialEq, Clone, Deserialize)]
 pub struct Nutrition {
-    pub calories: Option<f32>,
-    pub carbohydrate_grams: Option<f32>,
+    pub calories: Option<f64>,
+    pub carbohydrate_grams: Option<f64>,
     pub cholesterol_milligrams: Option<f32>,
-    pub fat_grams: Option<f32>,
+    pub fat_grams: Option<f64>,
     pub fiber_grams: Option<f32>,
-    pub protein_grams: Option<f32>,
+    pub protein_grams: Option<f64>,
     pub saturated_fat_grams: Option<f32>,
     pub sodium_milligrams: Option<f32>,
     pub sugar_grams: Option<f32>,
@@ -47,17 +48,29 @@ pub struct Recipe {
 impl From<NutritionInformation> for Nutrition {
     fn from(info: NutritionInformation) -> Self {
         Self {
-            calories: info.calories,
-            carbohydrate_grams: info.carbohydrate_grams,
+            calories: info.calories.map(|v| v as f64),
+            carbohydrate_grams: info.carbohydrate_grams.map(|v| v as f64),
             cholesterol_milligrams: info.cholesterol_milligrams,
-            fat_grams: info.fat_grams,
+            fat_grams: info.fat_grams.map(|v| v as f64),
             fiber_grams: info.fiber_grams,
-            protein_grams: info.protein_grams,
+            protein_grams: info.protein_grams.map(|v| v as f64),
             saturated_fat_grams: info.saturated_fat_grams,
             sodium_milligrams: info.sodium_milligrams,
             sugar_grams: info.sugar_grams,
             trans_fat_grams: info.trans_fat_grams,
             unsaturated_fat_grams: info.unsaturated_fat_grams,
+        }
+    }
+}
+
+impl From<NutritionalInfo> for Nutrition {
+    fn from(info: NutritionalInfo) -> Self {
+        Self {
+            calories: Some(info.calories),
+            carbohydrate_grams: Some(info.carbs_g),
+            fat_grams: Some(info.fat_g),
+            protein_grams: Some(info.protein_g),
+            ..Default::default()
         }
     }
 }
@@ -162,6 +175,27 @@ impl Recipe {
         for ingredient in self.ingredients.iter_mut() {
             *ingredient = crate::conversion::engine::format_with_weight(ingredient, chart);
         }
+    }
+
+    pub fn get_ingredient_weights(&self, chart: &crate::conversion::data::WeightChart) -> Vec<(String, f64)> {
+        self.ingredients
+            .iter()
+            .filter_map(|i| {
+                let vol = crate::conversion::parser::parse_ingredient(i)?;
+                let weight = crate::conversion::engine::convert_to_weight(i, chart)?;
+                Some((vol.ingredient, weight))
+            })
+            .collect()
+    }
+
+    pub fn calculate_nutrition(
+        &mut self,
+        weight_chart: &crate::conversion::data::WeightChart,
+        nutrition_chart: &NutritionChart,
+    ) {
+        let weights = self.get_ingredient_weights(weight_chart);
+        let info = calculate_nutrition(&weights, &nutrition_chart);
+        self.nutrition = Some(Nutrition::from(info));
     }
 }
 
@@ -401,5 +435,23 @@ mod tests {
         recipe.convert_ingredients(&chart);
         assert_eq!(recipe.ingredients[0], "2 cups (426g) packed brown sugar");
         assert_eq!(recipe.ingredients[1], "6 tablespoons (85g) unsalted butter");
+    }
+
+    #[test]
+    fn test_get_ingredient_weights() {
+        let recipe = Recipe {
+            ingredients: vec![
+                "1 cup All-Purpose Flour".into(),
+                "1 cup granulated sugar".into(),
+            ],
+            ..Recipe::default()
+        };
+        let chart = crate::conversion::data::WeightChart::new();
+        let weights = recipe.get_ingredient_weights(&chart);
+        assert_eq!(weights.len(), 2);
+        assert_eq!(weights[0].0, "All-Purpose Flour");
+        assert_eq!(weights[0].1, 120.0);
+        assert_eq!(weights[1].0, "granulated sugar");
+        assert_eq!(weights[1].1, 198.0);
     }
 }
