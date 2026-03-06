@@ -8,8 +8,8 @@ pub struct Args {
     #[arg(short, long, env = "RECIPES__LOG_LEVEL")]
     pub log_level: Option<String>,
 
-    #[arg(short, long, env = "RECIPES__MCP_TRANSPORT")]
-    pub mcp_transport: Option<String>,
+    #[arg(short, long, env = "RECIPES__TRANSPORT")]
+    pub transport: Option<String>,
 
     #[arg(short, long, env = "RECIPES__PORT")]
     pub port: Option<u16>,
@@ -21,7 +21,7 @@ pub struct Args {
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct AppConfig {
     pub log_level: String,
-    pub mcp_transport: String,
+    pub transport: String,
     pub port: u16,
     pub weight_conversion: bool,
 }
@@ -32,7 +32,7 @@ impl AppConfig {
 
         let mut builder = Config::builder()
             .set_default("log_level", "info")?
-            .set_default("mcp_transport", "stdio")?
+            .set_default("transport", "stdio")?
             .set_default("port", 3000)?
             .set_default("weight_conversion", true)?
             .add_source(File::with_name("config/default").required(false))
@@ -44,8 +44,8 @@ impl AppConfig {
         if let Some(level) = args.log_level {
             builder = builder.set_override("log_level", level)?;
         }
-        if let Some(transport) = args.mcp_transport {
-            builder = builder.set_override("mcp_transport", transport)?;
+        if let Some(transport) = args.transport {
+            builder = builder.set_override("transport", transport)?;
         }
         if let Some(port) = args.port {
             builder = builder.set_override("port", port)?;
@@ -70,20 +70,20 @@ mod tests {
     fn test_default_config() {
         unsafe {
             env::remove_var("RECIPES__LOG_LEVEL");
-            env::remove_var("RECIPES__MCP_TRANSPORT");
+            env::remove_var("RECIPES__TRANSPORT");
             env::remove_var("RECIPES__PORT");
             env::remove_var("RECIPES__WEIGHT_CONVERSION");
         }
 
         let args = Args {
             log_level: None,
-            mcp_transport: None,
+            transport: None,
             port: None,
             weight_conversion: None,
         };
         let config = AppConfig::load(args).unwrap();
         assert_eq!(config.log_level, "info");
-        assert_eq!(config.mcp_transport, "stdio");
+        assert_eq!(config.transport, "stdio");
         assert_eq!(config.port, 3000);
         assert!(config.weight_conversion);
     }
@@ -98,7 +98,7 @@ mod tests {
         }
         let args = Args {
             log_level: None,
-            mcp_transport: None,
+            transport: None,
             port: None,
             weight_conversion: None,
         };
@@ -123,7 +123,7 @@ mod tests {
         }
         let args = Args {
             log_level: Some("trace".into()),
-            mcp_transport: None,
+            transport: None,
             port: Some(5000),
             weight_conversion: Some(false),
         };
@@ -146,7 +146,7 @@ mod tests {
         }
         let args = Args {
             log_level: None,
-            mcp_transport: None,
+            transport: None,
             port: Some(8080),
             weight_conversion: None,
         };
@@ -155,7 +155,7 @@ mod tests {
         
         let args_default = Args {
             log_level: None,
-            mcp_transport: None,
+            transport: None,
             port: None,
             weight_conversion: None,
         };

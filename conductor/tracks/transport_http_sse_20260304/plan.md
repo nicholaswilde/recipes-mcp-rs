@@ -5,8 +5,8 @@
 - [x] Update `Args` in `src/config.rs` to include a `--transport` flag (default: `stdio`) and optional `--port` (default: `3000`).
 
 ## Phase 2: Refactoring
-- [ ] Abstract the request handling logic in `src/main.rs` into a standalone function or module if needed to be reused between stdio and HTTP.
-- [ ] Move tool implementation to a more modular structure if necessary for clarity.
+- [x] Abstract the request handling logic in `src/main.rs` into a standalone function or module if needed to be reused between stdio and HTTP.
+- [x] Move tool implementation to a more modular structure if necessary for clarity.
 
 ## Phase 3: Implementation
 - [ ] Create an `http_transport` module (e.g., in `src/transport/http.rs`).
