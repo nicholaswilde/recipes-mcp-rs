@@ -13,7 +13,7 @@
 - [x] Surface dietary metadata in the `formatter`. (COMPLETED)
 - [x] Update the `search` and `scrape` tool handlers in `src/main.rs`. (COMPLETED)
 
-## Phase 4: Testing
+## Phase 4: Testing [checkpoint: 4212230b39eb6c328a60d15e7b7f0924ecb028ae]
 - [x] Test filtering behavior for `vegan` and `gluten-free`. (COMPLETED)
 - [x] Test formatting when dietary info is present. (COMPLETED)
 
