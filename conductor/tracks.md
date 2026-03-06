@@ -14,13 +14,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 - Link: [dietary_filtering_20260304](./tracks/dietary_filtering_20260304/index.md)
 - Description: Integrate dietary metadata into search and formatting tools to support filtering for vegan, gluten-free, etc.
 
+## Completed Tracks
+
 ---
 ## [x] Track: Recipe Nutrition Estimation
-- Link: [nutrition_estimation_20260304](./tracks/nutrition_estimation_20260304/index.md)
+- Link: [nutrition_estimation_20260304](./archive/nutrition_estimation_20260304/index.md)
 - Description: Estimate nutritional values for recipes by analyzing ingredient lists and weights.
-
-
-## Completed Tracks
 
 ---
 ## [x] Track: HTTP and SSE Transport Mode Support
