@@ -60,6 +60,25 @@ impl Default for NutritionChart {
     }
 }
 
+pub fn calculate_nutrition(
+    ingredients: &[(String, f64)],
+    chart: &NutritionChart,
+) -> NutritionalInfo {
+    let mut total = NutritionalInfo::default();
+
+    for (name, weight_g) in ingredients {
+        if let Some(info) = chart.get(name) {
+            let factor = weight_g / 100.0;
+            total.calories += info.calories * factor;
+            total.fat_g += info.fat_g * factor;
+            total.carbs_g += info.carbs_g * factor;
+            total.protein_g += info.protein_g * factor;
+        }
+    }
+
+    total
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -78,5 +97,37 @@ mod tests {
         let chart = NutritionChart::new();
         let flour = chart.get("all-purpose flour").unwrap();
         assert_eq!(flour.calories, 364.0);
+    }
+
+    #[test]
+    fn test_calculate_nutrition() {
+        let chart = NutritionChart::new();
+        // 100g flour + 100g sugar
+        let ingredients = vec![
+            ("all-purpose flour".to_string(), 100.0),
+            ("granulated sugar".to_string(), 100.0),
+        ];
+        let info = calculate_nutrition(&ingredients, &chart);
+        assert_eq!(info.calories, 364.0 + 387.0);
+        assert_eq!(info.carbs_g, 76.0 + 100.0);
+    }
+
+    #[test]
+    fn test_calculate_nutrition_partial() {
+        let chart = NutritionChart::new();
+        // 50g flour
+        let ingredients = vec![("all-purpose flour".to_string(), 50.0)];
+        let info = calculate_nutrition(&ingredients, &chart);
+        assert_eq!(info.calories, 182.0);
+        assert_eq!(info.carbs_g, 38.0);
+    }
+
+    #[test]
+    fn test_calculate_nutrition_missing() {
+        let chart = NutritionChart::new();
+        // 100g unicorn dust (missing)
+        let ingredients = vec![("unicorn dust".to_string(), 100.0)];
+        let info = calculate_nutrition(&ingredients, &chart);
+        assert_eq!(info.calories, 0.0);
     }
 }

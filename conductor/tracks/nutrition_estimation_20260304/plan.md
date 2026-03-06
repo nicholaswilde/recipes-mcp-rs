@@ -5,8 +5,8 @@
 - [x] Create an initial internal dataset of nutritional values for common ingredients (matching `WeightChart`). (COMPLETED)
 
 ## Phase 2: Engine Implementation
-- [ ] Implement a `calculate_nutrition` function that uses ingredient weights to calculate totals.
-- [ ] Handle missing nutritional data gracefully.
+- [x] Implement a `calculate_nutrition` function that uses ingredient weights to calculate totals. (COMPLETED)
+- [x] Handle missing nutritional data gracefully. (COMPLETED)
 
 ## Phase 3: Integration
 - [ ] Add the `nutrition` action to the `manage_recipes` tool.
