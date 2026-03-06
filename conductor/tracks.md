@@ -5,11 +5,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## Active Tracks
 
 ---
-## [x] Track: HTTP and SSE Transport Mode Support
-- Link: [transport_http_sse_20260304](./tracks/transport_http_sse_20260304/index.md)
-- Description: Implement HTTP and SSE transport modes for the MCP server using Axum.
-
----
 ## [ ] Track: Multi-Provider Recipe Search
 - Link: [multi_provider_search_20260304](./tracks/multi_provider_search_20260304/index.md)
 - Description: Expand recipe search to support multiple providers (Food Network, Serious Eats, etc.) with provider selection.
@@ -27,9 +22,11 @@ This file tracks all major tracks for the project. Each track has its own detail
 ## Completed Tracks
 
 ---
+## [x] Track: HTTP and SSE Transport Mode Support
+- Link: [transport_http_sse_20260304](./archive/transport_http_sse_20260304/index.md)
+- Description: Implement HTTP and SSE transport modes for the MCP server using Axum.
+
+---
 ## [x] Track: Prioritized Weight Conversion Matching
 - Link: [togglable_weight_conversion_20260305](./archive/togglable_weight_conversion_20260305/index.md)
 - Description: Improve accuracy by prioritizing longer ingredient names in weight conversion matching.
-
-
-
