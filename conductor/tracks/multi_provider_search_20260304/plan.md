@@ -5,9 +5,10 @@
 - [x] Define a `RecipeProvider` trait for consistency. (COMPLETED)
 
 ## Phase 2: Implementation
-- [ ] Implement `FoodNetworkProvider`.
-- [ ] Implement `SeriousEatsProvider`.
-- [ ] Update `search_recipes` to accept a `provider` enum.
+- [x] Implement `FoodNetworkProvider`. (COMPLETED)
+- [x] Implement `SeriousEatsProvider`. (COMPLETED)
+- [x] Update `search_recipes` to accept a `provider` enum. (COMPLETED)
+
 
 ## Phase 3: Integration
 - [ ] Update the `manage_recipes` tool definition to include `provider`.
