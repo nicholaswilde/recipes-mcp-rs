@@ -6,11 +6,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Search/Scrape Caching Layer**
-*Link: [./tracks/search_caching_20260305/](./tracks/search_caching_20260305/)*
-
----
-
 - [ ] **Track: Metric/Imperial Volume Conversion**
 *Link: [./tracks/volume_conversion_20260305/](./tracks/volume_conversion_20260305/)*
 
@@ -45,6 +40,11 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link: [./tracks/recipe_sanitization_20260305/](./tracks/recipe_sanitization_20260305/)*
 
 ## Completed Tracks
+
+---
+## [x] Track: Search/Scrape Caching Layer
+- Link: [search_caching_20260305](./archive/search_caching_20260305/index.md)
+- Description: Implement a caching layer for search results and scraped recipes.
 
 ---
 ## [x] Track: Fix Search Provider Tests
