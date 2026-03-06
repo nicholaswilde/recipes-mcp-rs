@@ -8,10 +8,10 @@
 - [x] Implement a `calculate_nutrition` function that uses ingredient weights to calculate totals. (COMPLETED)
 - [x] Handle missing nutritional data gracefully. (COMPLETED)
 
-## Phase 3: Integration
+## Phase 3: Integration [checkpoint: f111d433d4857adec0ede93643d0f3aad4f8b995]
 - [x] Add the `nutrition` action to the `manage_recipes` tool. (COMPLETED)
 - [x] Update the action handler in `src/main.rs`. (COMPLETED)
-- [~] Update the `formatter` to include a nutrition table.
+- [x] Update the `formatter` to include a nutrition table. (COMPLETED)
 
 ## Phase 4: Testing
 - [ ] Unit test the calculation logic for a simple recipe.
