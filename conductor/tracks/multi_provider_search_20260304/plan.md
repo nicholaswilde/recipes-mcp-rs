@@ -4,7 +4,7 @@
 - [x] Refactor `src/search.rs` to support multiple provider backends. (COMPLETED)
 - [x] Define a `RecipeProvider` trait for consistency. (COMPLETED)
 
-## Phase 2: Implementation
+## Phase 2: Implementation [checkpoint: b3b449266dd889441d9766bb8ea55f7ff459bc88]
 - [x] Implement `FoodNetworkProvider`. (COMPLETED)
 - [x] Implement `SeriousEatsProvider`. (COMPLETED)
 - [x] Update `search_recipes` to accept a `provider` enum. (COMPLETED)
