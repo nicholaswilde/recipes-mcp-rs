@@ -1,9 +1,9 @@
 # Implementation Plan: Fix Search Provider Tests
 
-## Phase 1: Research & Debugging
+## Phase 1: Research & Debugging [checkpoint: bd8a64461c68f5ba72afe169bf711ff70e57cc70]
 - [x] Task: Add temporary debug logging to `src/search.rs` to capture HTML content from each provider.
 - [x] Task: Execute search tests and analyze the output to identify new selectors and header improvements.
-- [ ] Task: Conductor - User Manual Verification 'Research & Debugging' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Research & Debugging' (Protocol in workflow.md)
 
 ## Phase 2: AllRecipes Fix
 - [ ] Task: Update `AllRecipesProvider` with new CSS selectors.
