@@ -6,7 +6,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Metric/Imperial Volume Conversion**
+- [x] **Track: Metric/Imperial Volume Conversion**
 *Link: [./tracks/volume_conversion_20260305/](./tracks/volume_conversion_20260305/)*
 
 ---
