@@ -8,7 +8,7 @@ An MCP server written in Rust for importing, parsing, scaling, formatting, and s
 - **Recipe Scaling:** Adjust servings for any recipe, automatically scaling ingredient quantities.
 - **Weight Conversion:** Automatically converts volumetric measurements (cups, tbsp, tsp) to gram weights using the [King Arthur Baking ingredient weight chart](https://www.kingarthurbaking.com/learn/ingredient-weight-chart).
 - **Unit System Conversion:** Automatically converts volume measurements between Metric and Imperial systems.
-- **Nutrition Estimation:** Automatically estimates calories and macronutrients (Fat, Carbs, Protein) for recipes based on ingredient weights.
+- **Nutrition Estimation:** Automatically estimates calories and macronutrients (Fat, Carbs, Protein) for recipes based on ingredient weights. Supports integration with external APIs (e.g., Edamam) for more detailed data with automatic fallback to internal estimation.
 - **Dietary Filtering:** Filter search results and scraped recipes based on dietary preferences (e.g., vegan, gluten-free).
 - **Admonition Extraction:** Captures recipe-specific tips, notes, and variations.
 - **Standalone Conversion Tool:** Quickly convert a list of ingredient strings into weighted equivalents or switch unit systems.
@@ -59,6 +59,8 @@ The server uses the following file-based configuration hierarchy (later files ov
 | Weight Conversion | `RECIPES__WEIGHT_CONVERSION` | `--weight-conversion` | `true` |
 | Cache Enabled | `RECIPES__CACHE_ENABLED` | `--cache-enabled` | `true` |
 | Cache Directory | `RECIPES__CACHE_DIR` | `--cache-dir` | `.cache` |
+| Nutrition App ID | `RECIPES__NUTRITION_APP_ID` | `--nutrition-app-id` | `None` |
+| Nutrition App Key | `RECIPES__NUTRITION_APP_KEY` | `--nutrition-app-key` | `None` |
 
 ### :wrench: MCP Tools
 
