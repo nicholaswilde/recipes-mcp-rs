@@ -16,7 +16,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Coverage Refinement (90%)**
+- [~] **Track: Coverage Refinement (90%)**
 *Link: [./tracks/coverage_refinement_20260307/](./tracks/coverage_refinement_20260307/)*
 
 ## Completed Tracks

@@ -5,13 +5,13 @@ This plan outlines the strategy and tasks to increase the code coverage of the R
 ## Phase 1: Baseline Analysis & Prioritization
 In this phase, we will establish the current coverage baseline and identify the specific files and modules that require the most attention.
 
-- [ ] Task: Baseline Analysis
-    - [ ] Run `task coverage` to get the current overall and per-file coverage.
-    - [ ] Identify top 5 files with lowest coverage in the `src/` directory.
-    - [ ] Document the baseline in a new `coverage_report.md` (temporary).
-- [ ] Task: Testability Review
-    - [ ] Analyze identified files for testability (e.g., hardcoded dependencies).
-    - [ ] Create missing test files where necessary.
+- [x] Task: Baseline Analysis
+    - [x] Run `task coverage` to get the current overall and per-file coverage.
+    - [x] Identify top 5 files with lowest coverage in the `src/` directory.
+    - [x] Document the baseline in a new `coverage_report.md` (temporary).
+- [x] Task: Testability Review
+    - [x] Analyze identified files for testability (e.g., hardcoded dependencies).
+    - [x] Create missing test files where necessary.
 - [ ] Task: Conductor - User Manual Verification 'Baseline Analysis & Prioritization' (Protocol in workflow.md)
 
 ## Phase 2: Core Logic Enhancement
