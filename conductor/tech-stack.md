@@ -21,6 +21,7 @@
 - **Clap:** For robust command-line argument parsing and help generation.
 - **Dotenv / Envy:** For managing environment-based configuration and secrets.
 - **urlencoding:** For safe encoding of search queries in URLs.
+- **Regex:** For parsing image dimensions and resolution heuristics.
 
 ## Networking & IO
 - **Reqwest:** For fetching recipe web pages (likely a dependency for the scrapers).
