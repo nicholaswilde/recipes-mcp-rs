@@ -1,8 +1,0 @@
-{
-  "track_id": "external_nutrition_api_20260305",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-03-05T22:00:00Z",
-  "updated_at": "2026-03-05T22:00:00Z",
-  "description": "Integrate external nutrition APIs (Edamam, Nutritionix) for accurate data."
-}
