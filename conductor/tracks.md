@@ -6,11 +6,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Advanced Image and Gallery Extraction**
-*Link: [./tracks/advanced_image_extraction_20260305/](./tracks/advanced_image_extraction_20260305/)*
-
----
-
 - [ ] **Track: External Nutrition API Integration**
 *Link: [./tracks/external_nutrition_api_20260305/](./tracks/external_nutrition_api_20260305/)*
 
