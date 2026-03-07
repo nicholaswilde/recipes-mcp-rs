@@ -16,10 +16,13 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Coverage Refinement (90%)**
-*Link: [./tracks/coverage_refinement_20260307/](./tracks/coverage_refinement_20260307/)*
-
 ## Completed Tracks
+
+---
+
+- [x] **Track: Coverage Refinement (90%)**
+- Link: [coverage_refinement_20260307](./archive/coverage_refinement_20260307/index.md)
+- Description: Achieve a minimum of 90% total code coverage and finalize Coveralls integration.
 
 ---
 ## [x] Track: External Nutrition API Integration
