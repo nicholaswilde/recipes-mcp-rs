@@ -25,6 +25,7 @@
 
 ## Networking & IO
 - **Reqwest:** For fetching recipe web pages (likely a dependency for the scrapers).
+- **Edamam Nutrition Analysis API:** For advanced, automated recipe nutritional analysis.
 - **Axum:** For implementing the HTTP and SSE transport server.
 - **Tower-HTTP:** For CORS and other middleware support.
 - **Futures:** For asynchronous stream handling (SSE).

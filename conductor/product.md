@@ -22,7 +22,7 @@ To provide a robust, automated interface for importing and parsing recipes from 
 - **Recipe Discovery:** Integrated search functionality allows users to find recipe URLs based on key terms from supported providers (AllRecipes, Food Network, Serious Eats, TheMealDB, Epicurious, NYT Cooking, BBC Good Food).
 - **Flexible Transport Modes:** Supports both `stdio` and `HTTP/SSE` (Server-Sent Events) for seamless integration with a wide variety of MCP clients and host environments.
 - **Metric/Imperial Volume Conversion:** Supports seamless conversion between Metric and Imperial units for liquid and dry volume measurements.
-- **Recipe Nutrition Estimation:** Automatically estimates calories and macronutrients (Fat, Carbs, Protein) for recipes by analyzing ingredient weights and volumetric conversions.
+- **Recipe Nutrition Estimation:** Automatically estimates calories and macronutrients (Fat, Carbs, Protein) for recipes by analyzing ingredient weights and volumetric conversions. Supports integration with external nutrition APIs (e.g., Edamam) for more detailed and accurate data with automatic fallback to internal estimation.
 - **Advanced Dietary Filtering:** Supports filtering search results and scraped recipes based on dietary preferences such as vegan, vegetarian, gluten-free, and more.
 - **Recipe Admonition Extraction:** Captures and displays recipe-specific tips, notes, and variations to provide users with more comprehensive cooking guidance.
 - **Integrated Caching:** Employs a file-based caching layer for search results and scraped recipes to improve responsiveness and reduce external network overhead.
