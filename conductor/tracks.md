@@ -6,11 +6,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: External Nutrition API Integration**
-*Link: [./tracks/external_nutrition_api_20260305/](./tracks/external_nutrition_api_20260305/)*
-
----
-
 - [ ] **Track: Interactive CLI Mode**
 *Link: [./tracks/interactive_cli_mode_20260305/](./tracks/interactive_cli_mode_20260305/)*
 
@@ -20,6 +15,11 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link: [./tracks/recipe_sanitization_20260305/](./tracks/recipe_sanitization_20260305/)*
 
 ## Completed Tracks
+
+---
+## [x] Track: External Nutrition API Integration
+- Link: [external_nutrition_api_20260305](./archive/external_nutrition_api_20260305/plan.md)
+- Description: Provide more accurate and detailed nutritional data by integrating with specialized external APIs.
 
 ---
 ## [x] Track: Cooklang Export Support
