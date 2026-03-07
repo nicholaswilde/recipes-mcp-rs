@@ -36,4 +36,5 @@
 
 ## Testing & Quality
 - **Cargo Test:** Standard Rust testing framework.
-- **Tarpaulin:** For code coverage reporting.
+- **cargo-llvm-cov:** For advanced, LLVM-source-based code coverage.
+- **Coveralls.io:** For cloud-based coverage tracking and historical reporting.
