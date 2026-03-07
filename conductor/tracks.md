@@ -6,7 +6,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Additional Recipe Search Providers**
+- [x] **Track: Additional Recipe Search Providers**
 *Link: [./tracks/extra_search_providers_20260305/](./tracks/extra_search_providers_20260305/)*
 
 ---
