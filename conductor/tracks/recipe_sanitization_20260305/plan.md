@@ -5,4 +5,4 @@
 - [x] Task: Implement the sanitization logic in `src/scraper.rs`.
 
 ## Phase 2: Verification
-- [ ] Task: Verify cleaned output for recipes with known "fluff".
+- [x] Task: Verify cleaned output for recipes with known "fluff".

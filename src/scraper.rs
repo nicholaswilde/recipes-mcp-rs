@@ -527,6 +527,8 @@ pub fn sanitize_instruction(text: &str) -> Option<String> {
         r"(?i)when I was in",
         r"(?i)grandmother used to",
         r"(?i)first made this",
+        r"(?i)click here",
+        r"(?i)sponsored",
     ];
 
     for pattern in fluff_patterns {
@@ -1208,6 +1210,12 @@ mod tests {
             (
                 "Step 1: Preheat the oven.",
                 Some("Step 1: Preheat the oven."),
+            ),
+            ("Click here to see more recipes like this one!", None),
+            ("Sponsored: This post was brought to you by Milk.", None),
+            (
+                "My grandmother used to make this every Sunday after church in our small cabin in the woods.",
+                None,
             ),
             ("", None),
             ("   ", None),
