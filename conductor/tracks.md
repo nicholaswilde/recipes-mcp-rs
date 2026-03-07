@@ -6,11 +6,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Additional Recipe Search Providers**
-*Link: [./tracks/extra_search_providers_20260305/](./tracks/extra_search_providers_20260305/)*
-
----
-
 - [ ] **Track: Advanced Image and Gallery Extraction**
 *Link: [./tracks/advanced_image_extraction_20260305/](./tracks/advanced_image_extraction_20260305/)*
 
