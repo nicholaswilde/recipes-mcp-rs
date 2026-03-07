@@ -53,6 +53,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 weight_conversion_enabled,
                 port: config.port,
                 cache,
+                nutrition_app_id: config.nutrition_app_id.clone(),
+                nutrition_app_key: config.nutrition_app_key.clone(),
             };
             run_server(state).await?;
         }
@@ -78,6 +80,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             weight_chart.clone(),
                             weight_conversion_enabled,
                             cache.clone(),
+                            config.nutrition_app_id.clone(),
+                            config.nutrition_app_key.clone(),
                         )
                         .await;
                         let response_json = serde_json::to_string(&response).unwrap();

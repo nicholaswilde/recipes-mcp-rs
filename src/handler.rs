@@ -31,6 +31,8 @@ pub async fn handle_request(
     weight_chart: Arc<WeightChart>,
     weight_conversion_enabled: bool,
     cache: Option<Arc<dyn crate::cache::RecipeCache>>,
+    nutrition_app_id: Option<String>,
+    nutrition_app_key: Option<String>,
 ) -> Response {
     let id = req.id.clone();
     match req.method.as_str() {
@@ -538,7 +540,23 @@ pub async fn handle_request(
                                 if let Some(target) = args.target_servings {
                                     recipe.scale(target);
                                 }
-                                recipe.calculate_nutrition(&weight_chart, &nutrition_chart);
+
+                                if let (Some(id), Some(key)) =
+                                    (&nutrition_app_id, &nutrition_app_key)
+                                {
+                                    if let Err(e) = recipe.calculate_nutrition_async(id, key).await
+                                    {
+                                        tracing::warn!(
+                                            "External nutrition analysis failed for {}: {}. Falling back to internal.",
+                                            recipe.name.clone().unwrap_or_default(),
+                                            e
+                                        );
+                                        recipe.calculate_nutrition(&weight_chart, &nutrition_chart);
+                                    }
+                                } else {
+                                    recipe.calculate_nutrition(&weight_chart, &nutrition_chart);
+                                }
+
                                 results.insert(
                                     recipe.name.clone().unwrap_or_default(),
                                     recipe.nutrition.clone(),
@@ -683,7 +701,7 @@ mod tests {
             method: "initialize".into(),
             params: None,
         };
-        let resp = handle_request(req, chart, true, None).await;
+        let resp = handle_request(req, chart, true, None, None, None).await;
         assert_eq!(resp.id, RequestId::Number(1));
         let result = resp.result.unwrap();
         assert_eq!(result["protocolVersion"], "2024-11-05");
@@ -698,7 +716,7 @@ mod tests {
             method: "tools/list".into(),
             params: None,
         };
-        let resp = handle_request(req, chart, true, None).await;
+        let resp = handle_request(req, chart, true, None, None, None).await;
         assert_eq!(resp.id, RequestId::Number(1));
         let result = resp.result.unwrap();
         let tools = result["tools"].as_array().unwrap();

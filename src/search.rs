@@ -410,7 +410,12 @@ impl RecipeSearchProvider for EpicuriousProvider {
         }
 
         let document = Html::parse_document(&html_content);
-        let selectors = [".summary-item", ".recipe-content-card", ".card", "div[class*='SummaryItem']"];
+        let selectors = [
+            ".summary-item",
+            ".recipe-content-card",
+            ".card",
+            "div[class*='SummaryItem']",
+        ];
 
         let mut results = Vec::new();
         for selector_str in selectors {
@@ -423,7 +428,7 @@ impl RecipeSearchProvider for EpicuriousProvider {
                     "a[class*='SummaryItemHedLink']",
                     ".hed",
                 ];
-                
+
                 let mut title = String::new();
                 for ts in title_selectors {
                     if let Some(title_elem) = element.select(&Selector::parse(ts).unwrap()).next() {
@@ -459,7 +464,9 @@ impl RecipeSearchProvider for EpicuriousProvider {
                 } else {
                     let link_selectors = ["a[class*='SummaryItemHedLink']", "a"];
                     for ls in link_selectors {
-                        if let Some(link_elem) = element.select(&Selector::parse(ls).unwrap()).next() {
+                        if let Some(link_elem) =
+                            element.select(&Selector::parse(ls).unwrap()).next()
+                        {
                             href = link_elem.value().attr("href").map(|s| s.to_string());
                             if href.is_some() {
                                 break;
@@ -528,13 +535,14 @@ impl RecipeSearchProvider for NYTCookingProvider {
         let document = Html::parse_document(&html_content);
         tracing::debug!("Searching for script#__NEXT_DATA__");
         let script_selector = Selector::parse("script#__NEXT_DATA__").unwrap();
-        
+
         if let Some(script_element) = document.select(&script_selector).next() {
             tracing::debug!("Found script#__NEXT_DATA__");
             let json_text = script_element.text().collect::<String>();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&json_text) {
                 tracing::debug!("Parsed JSON from __NEXT_DATA__");
-                let results_array = json.pointer("/props/pageProps/results")
+                let results_array = json
+                    .pointer("/props/pageProps/results")
                     .or_else(|| json.pointer("/props/pageProps/initialData/search/results"))
                     .and_then(|v| v.as_array());
 
@@ -544,7 +552,7 @@ impl RecipeSearchProvider for NYTCookingProvider {
                     for item in results_array {
                         let title = item["title"].as_str().unwrap_or("").to_string();
                         let url_path = item["url"].as_str().unwrap_or("");
-                        
+
                         if title.is_empty() || url_path.is_empty() {
                             continue;
                         }
@@ -558,7 +566,10 @@ impl RecipeSearchProvider for NYTCookingProvider {
                         }
 
                         if !results.iter().any(|r: &SearchResult| r.url == full_url) {
-                            results.push(SearchResult { title, url: full_url });
+                            results.push(SearchResult {
+                                title,
+                                url: full_url,
+                            });
                         }
                         if results.len() >= limit as usize {
                             break;
@@ -576,11 +587,16 @@ impl RecipeSearchProvider for NYTCookingProvider {
         let mut results = Vec::new();
         for card in document.select(&card_selector) {
             if let Some(title_elem) = card.select(&title_selector).next() {
-                let title = title_elem.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                let title = title_elem
+                    .text()
+                    .collect::<Vec<_>>()
+                    .join(" ")
+                    .trim()
+                    .to_string();
                 if title.is_empty() {
                     continue;
                 }
-                
+
                 if let Some(href) = card.value().attr("href") {
                     let mut full_url = href.to_string();
                     if full_url.contains('?') {
@@ -591,7 +607,10 @@ impl RecipeSearchProvider for NYTCookingProvider {
                     }
 
                     if !results.iter().any(|r: &SearchResult| r.url == full_url) {
-                        results.push(SearchResult { title, url: full_url });
+                        results.push(SearchResult {
+                            title,
+                            url: full_url,
+                        });
                     }
                 }
             }
@@ -635,21 +654,23 @@ impl RecipeSearchProvider for BBCGoodFoodProvider {
 
         let document = Html::parse_document(&html_content);
         let script_selector = Selector::parse("script#\\__POST_CONTENT__").unwrap();
-        
+
         if let Some(script_element) = document.select(&script_selector).next() {
             let json_text = script_element.text().collect::<String>();
-            let items = serde_json::from_str::<serde_json::Value>(&json_text).ok().and_then(|json| {
-                json.pointer("/searchResults/items")
-                    .and_then(|v| v.as_array())
-                    .cloned()
-            });
+            let items = serde_json::from_str::<serde_json::Value>(&json_text)
+                .ok()
+                .and_then(|json| {
+                    json.pointer("/searchResults/items")
+                        .and_then(|v| v.as_array())
+                        .cloned()
+                });
 
             if let Some(items) = items {
                 let mut results = Vec::new();
                 for item in items {
                     let title = item["title"].as_str().unwrap_or("").to_string();
                     let url_path = item["url"].as_str().unwrap_or("");
-                    
+
                     if title.is_empty() || url_path.is_empty() {
                         continue;
                     }
@@ -664,7 +685,10 @@ impl RecipeSearchProvider for BBCGoodFoodProvider {
                     }
 
                     if !results.iter().any(|r: &SearchResult| r.url == full_url) {
-                        results.push(SearchResult { title, url: full_url });
+                        results.push(SearchResult {
+                            title,
+                            url: full_url,
+                        });
                     }
                     if results.len() >= limit as usize {
                         break;
@@ -680,11 +704,16 @@ impl RecipeSearchProvider for BBCGoodFoodProvider {
         for card in document.select(&card_selector) {
             let title_selector = Selector::parse("h3, h2").unwrap();
             if let Some(title_elem) = card.select(&title_selector).next() {
-                let title = title_elem.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                let title = title_elem
+                    .text()
+                    .collect::<Vec<_>>()
+                    .join(" ")
+                    .trim()
+                    .to_string();
                 if title.is_empty() {
                     continue;
                 }
-                
+
                 if let Some(href) = card.value().attr("href") {
                     let mut full_url = href.to_string();
                     if !full_url.starts_with("http") {
@@ -692,7 +721,10 @@ impl RecipeSearchProvider for BBCGoodFoodProvider {
                     }
 
                     if !results.iter().any(|r: &SearchResult| r.url == full_url) {
-                        results.push(SearchResult { title, url: full_url });
+                        results.push(SearchResult {
+                            title,
+                            url: full_url,
+                        });
                     }
                 }
             }
@@ -907,7 +939,10 @@ mod tests {
         let res = provider.search("lasagna", 5).await;
         match res {
             Ok(results) => {
-                assert!(!results.is_empty(), "Epicurious results should not be empty");
+                assert!(
+                    !results.is_empty(),
+                    "Epicurious results should not be empty"
+                );
                 assert!(results[0].url.contains("epicurious.com"));
             }
             Err(ScraperError::RequestBlocked(_)) => {
@@ -927,7 +962,10 @@ mod tests {
         let res = provider.search("lasagna", 5).await;
         match res {
             Ok(results) => {
-                assert!(!results.is_empty(), "NYT Cooking results should not be empty");
+                assert!(
+                    !results.is_empty(),
+                    "NYT Cooking results should not be empty"
+                );
                 assert!(results[0].url.contains("cooking.nytimes.com"));
             }
             Err(ScraperError::RequestBlocked(_)) => {
@@ -943,7 +981,10 @@ mod tests {
         let res = provider.search("lasagna", 5).await;
         match res {
             Ok(results) => {
-                assert!(!results.is_empty(), "BBC Good Food results should not be empty");
+                assert!(
+                    !results.is_empty(),
+                    "BBC Good Food results should not be empty"
+                );
                 assert!(results[0].url.contains("bbcgoodfood.com"));
             }
             Err(ScraperError::RequestBlocked(_)) => {

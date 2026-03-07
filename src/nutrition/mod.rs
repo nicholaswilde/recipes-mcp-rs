@@ -1,3 +1,6 @@
+pub mod edamam;
+
+use edamam::EdamamClient;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -79,6 +82,17 @@ pub fn calculate_nutrition(
     total
 }
 
+pub async fn calculate_nutrition_external(
+    title: Option<String>,
+    ingredients: Vec<String>,
+    app_id: &str,
+    app_key: &str,
+) -> anyhow::Result<NutritionalInfo> {
+    let client = EdamamClient::new(app_id.to_string(), app_key.to_string());
+    let resp = client.get_nutrition(title, ingredients).await?;
+    Ok(NutritionalInfo::from(resp))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -129,5 +143,67 @@ mod tests {
         let ingredients = vec![("unicorn dust".to_string(), 100.0)];
         let info = calculate_nutrition(&ingredients, &chart);
         assert_eq!(info.calories, 0.0);
+    }
+
+    #[test]
+    fn test_edamam_conversion() {
+        use crate::nutrition::edamam::{EdamamNutrient, EdamamResponse};
+        let mut nutrients = HashMap::new();
+        nutrients.insert(
+            "ENERC_KCAL".to_string(),
+            EdamamNutrient {
+                label: "Energy".to_string(),
+                quantity: 100.0,
+                unit: "kcal".to_string(),
+            },
+        );
+        nutrients.insert(
+            "FAT".to_string(),
+            EdamamNutrient {
+                label: "Fat".to_string(),
+                quantity: 10.0,
+                unit: "g".to_string(),
+            },
+        );
+        nutrients.insert(
+            "CHOCDF".to_string(),
+            EdamamNutrient {
+                label: "Carbs".to_string(),
+                quantity: 20.0,
+                unit: "g".to_string(),
+            },
+        );
+        nutrients.insert(
+            "PROCNT".to_string(),
+            EdamamNutrient {
+                label: "Protein".to_string(),
+                quantity: 5.0,
+                unit: "g".to_string(),
+            },
+        );
+
+        let resp = EdamamResponse {
+            uri: "test".to_string(),
+            yield_count: 1.0,
+            calories: 100.0,
+            total_weight: 100.0,
+            diet_labels: vec![],
+            health_labels: vec![],
+            cautions: vec![],
+            total_nutrients: nutrients.clone(),
+            total_daily: HashMap::new(),
+        };
+
+        let info = NutritionalInfo::from(resp.clone());
+        assert_eq!(info.calories, 100.0);
+        assert_eq!(info.fat_g, 10.0);
+        assert_eq!(info.carbs_g, 20.0);
+        assert_eq!(info.protein_g, 5.0);
+
+        let nutrition = resp.to_nutrition();
+        assert_eq!(nutrition.calories, Some(100.0));
+        assert_eq!(nutrition.fat_grams, Some(10.0));
+        assert_eq!(nutrition.carbohydrate_grams, Some(20.0));
+        assert_eq!(nutrition.protein_grams, Some(5.0));
     }
 }

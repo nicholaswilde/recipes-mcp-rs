@@ -226,6 +226,20 @@ impl Recipe {
         self.nutrition = Some(Nutrition::from(info));
     }
 
+    pub async fn calculate_nutrition_async(
+        &mut self,
+        app_id: &str,
+        app_key: &str,
+    ) -> anyhow::Result<()> {
+        let client =
+            crate::nutrition::edamam::EdamamClient::new(app_id.to_string(), app_key.to_string());
+        let resp = client
+            .get_nutrition(self.name.clone(), self.ingredients.clone())
+            .await?;
+        self.nutrition = Some(resp.to_nutrition());
+        Ok(())
+    }
+
     pub fn matches_filters(&self, filters: &DietaryFilters) -> bool {
         if filters.preferences.is_empty() {
             return true;
@@ -380,22 +394,31 @@ pub fn sort_images_by_resolution(images: &mut [String]) {
         }
 
         // Try to find width=600
-        if score == 0 && let Some(caps) = width_re.captures(url) {
+        if score == 0
+            && let Some(caps) = width_re.captures(url)
+        {
             let w: u32 = caps[1].parse().unwrap_or(0);
             score = (w as i64) * (w as i64); // Assume square if only width is given
         }
 
         // Heuristics for keywords
-        if url.to_lowercase().contains("large") || url.to_lowercase().contains("big") || url.to_lowercase().contains("high") {
+        if url.to_lowercase().contains("large")
+            || url.to_lowercase().contains("big")
+            || url.to_lowercase().contains("high")
+        {
             score += 1000000;
         }
-        if url.to_lowercase().contains("thumb") || url.to_lowercase().contains("small") || url.to_lowercase().contains("avatar") || url.to_lowercase().contains("icon") {
+        if url.to_lowercase().contains("thumb")
+            || url.to_lowercase().contains("small")
+            || url.to_lowercase().contains("avatar")
+            || url.to_lowercase().contains("icon")
+        {
             score = score.saturating_sub(500000);
         }
 
         // Penalty for certain extensions that are usually icons
         if url.ends_with(".png") || url.ends_with(".svg") {
-             score = score.saturating_sub(100000);
+            score = score.saturating_sub(100000);
         }
 
         // Use reverse order (largest first)
@@ -407,8 +430,12 @@ fn extract_images_from_json(json: &serde_json::Value, gallery: &mut Vec<String>)
     match json {
         serde_json::Value::Object(map) => {
             // Check if this object is a Recipe or contains one
-            let is_recipe = map.get("@type").and_then(|t| t.as_str()).map(|s| s == "Recipe").unwrap_or(false);
-            
+            let is_recipe = map
+                .get("@type")
+                .and_then(|t| t.as_str())
+                .map(|s| s == "Recipe")
+                .unwrap_or(false);
+
             if is_recipe && let Some(image) = map.get("image") {
                 add_image_value_to_gallery(image, gallery);
             }
@@ -426,7 +453,7 @@ fn extract_images_from_json(json: &serde_json::Value, gallery: &mut Vec<String>)
                     // Avoid infinite recursion by not following @context or @id if they existed as objects
                     // but here we just process normally
                     if !is_recipe { // If we already found the recipe, we might not need to recurse deeper for images, but @graph needs it
-                         // For simplicity, we can always recurse if it's not a primitive
+                        // For simplicity, we can always recurse if it's not a primitive
                     }
                 }
             }
@@ -454,7 +481,9 @@ fn add_image_value_to_gallery(value: &serde_json::Value, gallery: &mut Vec<Strin
         }
         serde_json::Value::Object(map) => {
             // Might be an ImageObject
-            if let Some(url) = map.get("url").and_then(|u| u.as_str()) && !gallery.contains(&url.to_string()) {
+            if let Some(url) = map.get("url").and_then(|u| u.as_str())
+                && !gallery.contains(&url.to_string())
+            {
                 gallery.push(url.to_string());
             }
         }
@@ -573,12 +602,12 @@ pub async fn scrape_recipe(
                 recipe.convert_ingredients(chart);
             }
             recipe.admonitions = admonitions.clone();
-            
+
             // Set main image to the best one found if not already set or if better one available
             if !gallery.is_empty() {
                 recipe.image_url = Some(gallery[0].clone());
             }
-            
+
             recipe.gallery = gallery.clone();
             recipe
         })
@@ -912,7 +941,7 @@ mod tests {
         "#;
         let document = scraper::Html::parse_document(html);
         let gallery = extract_gallery_from_html(&document);
-        
+
         assert!(gallery.contains(&"http://example.com/image1.jpg".to_string()));
         assert!(gallery.contains(&"http://example.com/image2.jpg".to_string()));
         assert!(gallery.contains(&"http://example.com/gallery1.jpg".to_string()));
@@ -927,14 +956,17 @@ mod tests {
             "http://example.com/medium.jpg?width=600".to_string(),
             "http://example.com/avatar-50x50.png".to_string(),
         ];
-        
+
         let mut sorted = images.clone();
         sort_images_by_resolution(&mut sorted);
-        
+
         // large-1200x800 should be first
         assert_eq!(sorted[0], "http://example.com/large-1200x800.jpg");
         // thumb-100x100 should be after medium
-        assert!(sorted.iter().position(|x| x.contains("1200x800")).unwrap() < sorted.iter().position(|x| x.contains("100x100")).unwrap());
+        assert!(
+            sorted.iter().position(|x| x.contains("1200x800")).unwrap()
+                < sorted.iter().position(|x| x.contains("100x100")).unwrap()
+        );
     }
 
     #[test]
@@ -974,7 +1006,7 @@ mod tests {
         let document = scraper::Html::parse_document(html);
         let mut gallery = extract_gallery_from_html(&document);
         sort_images_by_resolution(&mut gallery);
-        
+
         assert!(gallery.contains(&"http://example.com/main.jpg".to_string()));
         assert!(gallery.contains(&"http://example.com/step1.jpg".to_string()));
         assert!(gallery.contains(&"http://example.com/step2.jpg".to_string()));

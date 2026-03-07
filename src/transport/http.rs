@@ -23,6 +23,8 @@ pub struct ServerState {
     pub weight_conversion_enabled: bool,
     pub port: u16,
     pub cache: Option<Arc<dyn crate::cache::RecipeCache>>,
+    pub nutrition_app_id: Option<String>,
+    pub nutrition_app_key: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -66,6 +68,8 @@ async fn handle_message(
         state.weight_chart.clone(),
         state.weight_conversion_enabled,
         state.cache.clone(),
+        state.nutrition_app_id.clone(),
+        state.nutrition_app_key.clone(),
     )
     .await;
 
@@ -93,6 +97,8 @@ mod tests {
             weight_conversion_enabled: true,
             port: actual_port,
             cache: None,
+            nutrition_app_id: None,
+            nutrition_app_key: None,
         });
 
         let app = Router::new()

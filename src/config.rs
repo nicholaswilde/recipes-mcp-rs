@@ -25,6 +25,12 @@ pub struct Args {
 
     #[arg(long, env = "RECIPES__CACHE_DIR")]
     pub cache_dir: Option<String>,
+
+    #[arg(long, env = "RECIPES__NUTRITION_APP_ID")]
+    pub nutrition_app_id: Option<String>,
+
+    #[arg(long, env = "RECIPES__NUTRITION_APP_KEY")]
+    pub nutrition_app_key: Option<String>,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -35,6 +41,8 @@ pub struct AppConfig {
     pub weight_conversion: bool,
     pub cache_enabled: bool,
     pub cache_dir: String,
+    pub nutrition_app_id: Option<String>,
+    pub nutrition_app_key: Option<String>,
 }
 
 impl AppConfig {
@@ -78,6 +86,12 @@ impl AppConfig {
         if let Some(cache_dir) = args.cache_dir {
             builder = builder.set_override("cache_dir", cache_dir)?;
         }
+        if let Some(id) = args.nutrition_app_id {
+            builder = builder.set_override("nutrition_app_id", id)?;
+        }
+        if let Some(key) = args.nutrition_app_key {
+            builder = builder.set_override("nutrition_app_key", key)?;
+        }
 
         let s = builder.build()?;
         s.try_deserialize()
@@ -110,6 +124,8 @@ mod tests {
             weight_conversion: None,
             cache_enabled: None,
             cache_dir: None,
+            nutrition_app_id: None,
+            nutrition_app_key: None,
         };
         let config = AppConfig::load(args).unwrap();
         assert_eq!(config.log_level, "info");
@@ -138,6 +154,8 @@ mod tests {
             weight_conversion: None,
             cache_enabled: None,
             cache_dir: None,
+            nutrition_app_id: None,
+            nutrition_app_key: None,
         };
         let config = AppConfig::load(args).unwrap();
         assert_eq!(config.log_level, "debug");
@@ -170,6 +188,8 @@ mod tests {
             weight_conversion: Some(false),
             cache_enabled: None,
             cache_dir: None,
+            nutrition_app_id: None,
+            nutrition_app_key: None,
         };
         let config = AppConfig::load(args).unwrap();
         assert_eq!(config.log_level, "trace");
@@ -196,6 +216,8 @@ mod tests {
             weight_conversion: None,
             cache_enabled: None,
             cache_dir: None,
+            nutrition_app_id: None,
+            nutrition_app_key: None,
         };
         let config = AppConfig::load(args).unwrap();
         assert_eq!(config.port, 8080);
@@ -208,6 +230,8 @@ mod tests {
             weight_conversion: None,
             cache_enabled: None,
             cache_dir: None,
+            nutrition_app_id: None,
+            nutrition_app_key: None,
         };
         let config_default = AppConfig::load(args_default).unwrap();
         assert_eq!(config_default.port, 3000);
@@ -231,6 +255,8 @@ mod tests {
             weight_conversion: None,
             cache_enabled: None,
             cache_dir: None,
+            nutrition_app_id: None,
+            nutrition_app_key: None,
         };
 
         let config = AppConfig::load(args).unwrap();
