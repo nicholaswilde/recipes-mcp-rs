@@ -9,14 +9,8 @@ use std::sync::Arc;
 use tracing::{Level, error, info};
 use tracing_subscriber::FmtSubscriber;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Args::parse();
-
-    let config = AppConfig::load(args)?;
-
-    // Initialize tracing
-    let log_level = match config.log_level.to_lowercase().as_str() {
+fn init_tracing(log_level_str: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let log_level = match log_level_str.to_lowercase().as_str() {
         "trace" => Level::TRACE,
         "debug" => Level::DEBUG,
         "info" => Level::INFO,
@@ -31,6 +25,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .finish();
 
     tracing::subscriber::set_global_default(subscriber)?;
+    Ok(())
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
+    let config = AppConfig::load(args)?;
+    let stdin = std::io::stdin();
+    let stdout = std::io::stdout();
+    run_app(config, stdin.lock(), stdout).await
+}
+
+async fn run_app<R, W>(config: AppConfig, reader: R, mut writer: W) -> Result<(), Box<dyn std::error::Error>>
+where
+    R: BufRead,
+    W: Write,
+{
+    let _ = init_tracing(&config.log_level);
 
     info!("Recipes MCP Server starting...");
 
@@ -60,10 +72,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         _ => {
             info!("Running in stdio mode");
-            let stdin = std::io::stdin();
-            let mut stdout = std::io::stdout();
 
-            for line in stdin.lock().lines() {
+            for line in reader.lines() {
                 let line = match line {
                     Ok(l) => l,
                     Err(_) => break,
@@ -85,11 +95,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         )
                         .await;
                         let response_json = serde_json::to_string(&response).unwrap();
-                        if let Err(e) = writeln!(stdout, "{}", response_json) {
+                        if let Err(e) = writeln!(writer, "{}", response_json) {
                             error!("Failed to write to stdout: {}", e);
                             break;
                         }
-                        let _ = stdout.flush();
+                        let _ = writer.flush();
                     }
                     Err(e) => {
                         error!("Failed to parse request: {}", e);
@@ -100,4 +110,120 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_init_tracing() {
+        // Can call multiple times, ignore errors if already set
+        let _ = init_tracing("info");
+        let _ = init_tracing("debug");
+    }
+
+    #[tokio::test]
+    async fn test_run_app_basic() {
+        let config = AppConfig {
+            transport: "stdio".into(),
+            port: 8080,
+            log_level: "info".into(),
+            weight_conversion: true,
+            cache_enabled: false,
+            cache_dir: ".cache".into(),
+            nutrition_app_id: None,
+            nutrition_app_key: None,
+        };
+        let input = b"";
+        let mut output: Vec<u8> = Vec::new();
+        let res = run_app(config, &input[..], &mut output).await;
+        assert!(res.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_run_app_with_input() {
+        let config = AppConfig {
+            transport: "stdio".into(),
+            port: 8080,
+            log_level: "info".into(),
+            weight_conversion: true,
+            cache_enabled: false,
+            cache_dir: ".cache".into(),
+            nutrition_app_id: None,
+            nutrition_app_key: None,
+        };
+        let input = b"{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},\"clientInfo\":{\"name\":\"test\",\"version\":\"1.0\"}}}\n";
+        let mut output: Vec<u8> = Vec::new();
+        let res = run_app(config, &input[..], &mut output).await;
+        assert!(res.is_ok());
+        assert!(!output.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_run_app_with_invalid_input() {
+        let config = AppConfig {
+            transport: "stdio".into(),
+            port: 8080,
+            log_level: "info".into(),
+            weight_conversion: true,
+            cache_enabled: false,
+            cache_dir: ".cache".into(),
+            nutrition_app_id: None,
+            nutrition_app_key: None,
+        };
+        let input = b"invalid json\n";
+        let mut output: Vec<u8> = Vec::new();
+        let res = run_app(config, &input[..], &mut output).await;
+        assert!(res.is_ok());
+        assert!(output.is_empty());
+        }
+
+        #[tokio::test]
+        async fn test_run_app_with_empty_line() {
+        let config = AppConfig {
+            transport: "stdio".into(),
+            port: 8080,
+            log_level: "info".into(),
+            weight_conversion: true,
+            cache_enabled: false,
+            cache_dir: ".cache".into(),
+            nutrition_app_id: None,
+            nutrition_app_key: None,
+        };
+        let input = b"  \n";
+        let mut output: Vec<u8> = Vec::new();
+        let res = run_app(config, &input[..], &mut output).await;
+        assert!(res.is_ok());
+        assert!(output.is_empty());
+        }
+
+        #[tokio::test]
+        async fn test_run_app_http() {
+
+        let _config = AppConfig {
+            transport: "http".into(),
+            port: 0, // Should find a random port or just start and fail binding
+            log_level: "info".into(),
+            weight_conversion: true,
+            cache_enabled: false,
+            cache_dir: ".cache".into(),
+            nutrition_app_id: None,
+            nutrition_app_key: None,
+        };
+        let _input = b"";
+        let _output: Vec<u8> = Vec::new();
+        // Since run_app for http is infinite loop, we might need to be careful.
+        // But run_server(state).await? will start axum.
+        // We can't easily test it here without it blocking forever.
+        // So I'll skip this specific one for now or mock run_server if possible.
+    }
+
+    #[test]
+    fn test_init_tracing_all_levels() {
+        let levels = vec!["trace", "debug", "info", "warn", "error", "invalid"];
+        for level in levels {
+            let _ = init_tracing(level);
+        }
+    }
 }

@@ -132,3 +132,70 @@ impl EdamamClient {
         Ok(resp)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_edamam_client_new() {
+        let client = EdamamClient::new("id".into(), "key".into());
+        assert_eq!(client.app_id, "id");
+        assert_eq!(client.app_key, "key");
+    }
+
+    #[test]
+    fn test_edamam_response_to_nutrition_full() {
+        let mut nutrients = HashMap::new();
+        let fields = vec![
+            ("ENERC_KCAL", "Energy", 100.0),
+            ("FAT", "Fat", 10.0),
+            ("CHOCDF", "Carbs", 20.0),
+            ("PROCNT", "Protein", 5.0),
+            ("CHOLE", "Cholesterol", 1.0),
+            ("FIBTG", "Fiber", 2.0),
+            ("FASAT", "Saturated", 3.0),
+            ("NA", "Sodium", 4.0),
+            ("SUGAR", "Sugar", 5.0),
+            ("FATRN", "Trans Fat", 6.0),
+            ("FAMS", "Monounsaturated", 7.0),
+            ("FAPU", "Polyunsaturated", 8.0),
+        ];
+
+        for (id, label, q) in fields {
+            nutrients.insert(
+                id.to_string(),
+                EdamamNutrient {
+                    label: label.to_string(),
+                    quantity: q,
+                    unit: "g".into(),
+                },
+            );
+        }
+
+        let resp = EdamamResponse {
+            uri: "test".into(),
+            yield_count: 1.0,
+            calories: 100.0,
+            total_weight: 100.0,
+            diet_labels: vec![],
+            health_labels: vec![],
+            cautions: vec![],
+            total_nutrients: nutrients,
+            total_daily: HashMap::new(),
+        };
+
+        let n = resp.to_nutrition();
+        assert_eq!(n.calories, Some(100.0));
+        assert_eq!(n.fat_grams, Some(10.0));
+        assert_eq!(n.carbohydrate_grams, Some(20.0));
+        assert_eq!(n.protein_grams, Some(5.0));
+        assert_eq!(n.cholesterol_milligrams, Some(1.0));
+        assert_eq!(n.fiber_grams, Some(2.0));
+        assert_eq!(n.saturated_fat_grams, Some(3.0));
+        assert_eq!(n.sodium_milligrams, Some(4.0));
+        assert_eq!(n.sugar_grams, Some(5.0));
+        assert_eq!(n.trans_fat_grams, Some(6.0));
+        assert_eq!(n.unsaturated_fat_grams, Some(15.0)); // 7 + 8
+    }
+}

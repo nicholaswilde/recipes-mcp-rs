@@ -200,4 +200,18 @@ mod tests {
         let sugar = chart.find_best_match("heavy powdered sugar").unwrap();
         assert_eq!(sugar.name, "Powdered Sugar");
     }
+
+    #[test]
+    fn test_load_from_file() {
+        use tempfile::NamedTempFile;
+        use std::io::Write;
+
+        let mut file = NamedTempFile::new().unwrap();
+        writeln!(file, r#"[{{ "name": "Test Ingredient", "grams_per_cup": 100.0 }}]"#).unwrap();
+        
+        let res = WeightChart::load_from_file(file.path()).unwrap();
+        assert_eq!(res.len(), 1);
+        assert_eq!(res[0].name, "Test Ingredient");
+        assert_eq!(res[0].grams_per_cup, 100.0);
+    }
 }

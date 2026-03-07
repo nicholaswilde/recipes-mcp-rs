@@ -90,4 +90,12 @@ mod tests {
         let formatted_plain = format_with_weight("1 cup sugar", &chart);
         assert_eq!(formatted_plain, "1 cup (198g) sugar");
     }
+
+    #[test]
+    fn test_convert_tsp() {
+        let chart = WeightChart::new();
+        // 1 tsp flour = 120 / 48 = 2.5
+        let weight = convert_to_weight("1 tsp flour", &chart).unwrap();
+        assert_eq!(weight, 2.5);
+    }
 }

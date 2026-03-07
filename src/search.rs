@@ -1043,5 +1043,48 @@ mod tests {
             preferences: vec![DietaryPreference::GlutenFree],
         };
         assert!(!res.matches_filters(&filters_gf));
+
+        let res_veg = SearchResult {
+            title: "Vegetarian Chili".into(),
+            url: "http://example.com/veg".into(),
+        };
+        assert!(res_veg.matches_filters(&DietaryFilters {
+            preferences: vec![DietaryPreference::Vegetarian]
+        }));
+
+        let res_df = SearchResult {
+            title: "Dairy-Free Milk".into(),
+            url: "http://example.com/df".into(),
+        };
+        assert!(res_df.matches_filters(&DietaryFilters {
+            preferences: vec![DietaryPreference::DairyFree]
+        }));
+
+        let res_keto = SearchResult {
+            title: "Keto Bread".into(),
+            url: "http://example.com/keto".into(),
+        };
+        assert!(res_keto.matches_filters(&DietaryFilters {
+            preferences: vec![DietaryPreference::Keto]
+        }));
+
+        let res_paleo = SearchResult {
+            title: "Paleo Diet".into(),
+            url: "http://example.com/paleo".into(),
+        };
+        assert!(res_paleo.matches_filters(&DietaryFilters {
+            preferences: vec![DietaryPreference::Paleo]
+        }));
+
+        let res_multi = SearchResult {
+            title: "Vegan Gluten-Free Cookie".into(),
+            url: "http://example.com/vgf".into(),
+        };
+        assert!(res_multi.matches_filters(&DietaryFilters {
+            preferences: vec![DietaryPreference::Vegan, DietaryPreference::GlutenFree]
+        }));
+        assert!(!res_multi.matches_filters(&DietaryFilters {
+            preferences: vec![DietaryPreference::Vegan, DietaryPreference::Keto]
+        }));
     }
 }

@@ -128,4 +128,44 @@ mod tests {
         let formatted = format_with_volume("1 cup water", UnitSystem::Metric);
         assert!(formatted.contains("1 cup (236.59 ml) water"));
     }
+
+    #[test]
+    fn test_convert_gal() {
+        let amt = parse_ingredient("4000ml water").unwrap();
+        let (_val, unit) = convert_volume(&amt, UnitSystem::Imperial).unwrap();
+        assert_eq!(unit, "gal");
+    }
+
+    #[test]
+    fn test_convert_qt() {
+        let amt = parse_ingredient("1000ml water").unwrap();
+        let (_val, unit) = convert_volume(&amt, UnitSystem::Imperial).unwrap();
+        assert_eq!(unit, "qt");
+    }
+
+    #[test]
+    fn test_convert_pt() {
+        let amt = parse_ingredient("500ml water").unwrap();
+        let (_val, unit) = convert_volume(&amt, UnitSystem::Imperial).unwrap();
+        assert_eq!(unit, "pt");
+    }
+
+    #[test]
+    fn test_convert_tsp() {
+        let amt = parse_ingredient("2ml water").unwrap();
+        let (val, unit) = convert_volume(&amt, UnitSystem::Imperial).unwrap();
+        assert_eq!(unit, "tsp");
+    }
+
+    #[test]
+    fn test_to_ml_all_units() {
+        assert!(to_ml(1.0, "liter").is_some());
+        assert!(to_ml(1.0, "teaspoon").is_some());
+        assert!(to_ml(1.0, "tablespoon").is_some());
+        assert!(to_ml(1.0, "fluid oz").is_some());
+        assert!(to_ml(1.0, "pint").is_some());
+        assert!(to_ml(1.0, "quart").is_some());
+        assert!(to_ml(1.0, "gallon").is_some());
+        assert!(to_ml(1.0, "invalid").is_none());
+    }
 }

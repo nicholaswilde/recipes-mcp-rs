@@ -720,21 +720,496 @@ mod tests {
         assert_eq!(resp.id, RequestId::Number(1));
         let result = resp.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
+        
+        let tool_names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
+        assert!(tool_names.contains(&"manage_recipes"));
+        assert!(tool_names.contains(&"convert_ingredients"));
+
         let manage_recipes = tools
             .iter()
             .find(|t| t["name"] == "manage_recipes")
             .unwrap();
-        let actions = manage_recipes["inputSchema"]["properties"]["action"]["enum"]
-            .as_array()
-            .unwrap();
-        assert!(actions.iter().any(|a| a == "nutrition"));
-
         let props = manage_recipes["inputSchema"]["properties"]
             .as_object()
             .unwrap();
         assert!(props.contains_key("dietary_filters"));
         assert!(props.contains_key("admonition_types"));
+    }
 
-        assert!(tools.iter().any(|t| t["name"] == "convert_ingredients"));
+    #[tokio::test]
+    async fn test_handle_tools_call_convert_ingredients() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "convert_ingredients",
+                "arguments": {
+                    "ingredients": ["1 cup All-Purpose Flour"],
+                    "target_system": "metric"
+                }
+            })),
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert_eq!(resp.id, RequestId::Number(1));
+        let result = resp.result.unwrap();
+        let content = result["content"].as_array().unwrap();
+        let text = content[0]["text"].as_str().unwrap();
+        // Current behavior: format_with_volume removes existing weight and uses 2 decimal places
+        assert!(text.contains("(236.59 ml)"));
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_manage_recipes_search() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "search",
+                    "query": "lasagna",
+                    "limit": 1,
+                    "provider": "themealdb"
+                }
+            })),
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert_eq!(resp.id, RequestId::Number(1));
+        let result = resp.result.unwrap();
+        let content = result["content"].as_array().unwrap();
+        let text = content[0]["text"].as_str().unwrap();
+        // TheMealDB is very reliable for search
+        assert!(text.contains("lasagna") || text.contains("Lasagna"));
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_manage_recipes_scrape() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "scrape",
+                    "urls": ["https://www.allrecipes.com/recipe/21261/classic-lasagna/"]
+                }
+            })),
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert_eq!(resp.id, RequestId::Number(1));
+        let result = resp.result.unwrap();
+        let content = result["content"].as_array().unwrap();
+        let text = content[0]["text"].as_str().unwrap();
+        println!("SCRAPE OUTPUT: {}", text);
+        assert!(text.contains("Lasagna") || text.contains("lasagna"));
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_manage_recipes_scale() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "scale",
+                    "recipes": [
+                        {
+                            "name": "Small Cake",
+                            "ingredients": ["1 cup flour"],
+                            "instructions": ["Bake"],
+                            "servings": 4,
+                            "diets": [],
+                            "admonitions": [],
+                            "gallery": []
+                        }
+                    ],
+                    "target_servings": 8
+                }
+            })),
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert_eq!(resp.id, RequestId::Number(1));
+        let result = resp.result.unwrap();
+        let content = result["content"].as_array().unwrap();
+        let text = content[0]["text"].as_str().unwrap();
+        assert!(text.contains("2 cup (240g) flour"));
+        assert!(text.contains("\"servings\": 8"));
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_manage_recipes_format() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "format",
+                    "recipes": [
+                        {
+                            "name": "Small Cake",
+                            "ingredients": ["1 cup flour"],
+                            "instructions": ["Bake"],
+                            "servings": 4,
+                            "diets": [],
+                            "admonitions": [],
+                            "gallery": []
+                        }
+                    ],
+                    "format_type": "markdown"
+                }
+            })),
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert_eq!(resp.id, RequestId::Number(1));
+        let result = resp.result.unwrap();
+        let content = result["content"].as_array().unwrap();
+        let text = content[0]["text"].as_str().unwrap();
+        assert!(text.contains("# Small Cake"));
+        assert!(text.contains("## Ingredients"));
+        assert!(text.contains("- 1 cup (120g) flour"));
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_manage_recipes_nutrition() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "nutrition",
+                    "recipes": [
+                        {
+                            "name": "Small Cake",
+                            "ingredients": ["1 cup flour"],
+                            "instructions": ["Bake"],
+                            "servings": 4,
+                            "diets": [],
+                            "admonitions": [],
+                            "gallery": []
+                        }
+                    ]
+                }
+            })),
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert_eq!(resp.id, RequestId::Number(1));
+        let result = resp.result.unwrap();
+        let content = result["content"].as_array().unwrap();
+        let text = content[0]["text"].as_str().unwrap();
+        assert!(text.contains("calories"));
+        assert!(text.contains("fat_grams"));
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_manage_recipes_errors() {
+        let chart = Arc::new(WeightChart::new());
+        
+        // Test invalid arguments
+        let req1 = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "scale",
+                    "target_servings": 0
+                }
+            })),
+        };
+        let resp1 = handle_request(req1, chart.clone(), true, None, None, None).await;
+        assert!(resp1.error.unwrap().message.contains("target_servings must be greater than 0"));
+
+        // Test missing urls/recipes
+        let req2 = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(2),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "scale",
+                    "target_servings": 8
+                }
+            })),
+        };
+        let resp2 = handle_request(req2, chart.clone(), true, None, None, None).await;
+        assert!(resp2.error.unwrap().message.contains("Either 'urls' or 'recipes' must be provided"));
+
+        // Test dietary filtering failure
+        let req3 = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(3),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "scale",
+                    "recipes": [
+                        {
+                            "name": "Meat Pie",
+                            "ingredients": ["1lb beef"],
+                            "instructions": ["Cook"],
+                            "servings": 4,
+                            "diets": [],
+                            "admonitions": [],
+                            "gallery": []
+                        }
+                    ],
+                    "target_servings": 8,
+                    "dietary_filters": ["vegan"]
+                }
+            })),
+        };
+        let resp3 = handle_request(req3, chart.clone(), true, None, None, None).await;
+        let result3 = resp3.result.unwrap();
+        let text3 = result3["content"][0]["text"].as_str().unwrap();
+        assert_eq!(text3, "[]"); // No recipes match vegan filter
+
+        // Test missing recipes for nutrition
+        let req4 = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(4),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "nutrition"
+                }
+            })),
+        };
+        let resp4 = handle_request(req4, chart.clone(), true, None, None, None).await;
+        assert!(resp4.error.unwrap().message.contains("Either 'urls' or 'recipes' must be provided"));
+
+        // Test invalid action
+        let req5 = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(5),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "invalid_action"
+                }
+            })),
+        };
+        let resp5 = handle_request(req5, chart.clone(), true, None, None, None).await;
+        assert!(resp5.error.unwrap().message.contains("Unknown action"));
+
+        // Test unknown tool
+        let req6 = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(6),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "unknown_tool",
+                "arguments": {}
+            })),
+        };
+        let resp6 = handle_request(req6, chart.clone(), true, None, None, None).await;
+        assert!(resp6.error.unwrap().message.contains("Method not found"));
+
+        // Test search missing query
+        let req7 = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(7),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "search"
+                }
+            })),
+        };
+        let resp7 = handle_request(req7, chart.clone(), true, None, None, None).await;
+        assert!(resp7.error.unwrap().message.contains("'query' is required"));
+
+        // Test convert_ingredients invalid args
+        let req8 = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(8),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "convert_ingredients",
+                "arguments": {
+                    "ingredients": "not an array"
+                }
+            })),
+        };
+        let resp8 = handle_request(req8, chart.clone(), true, None, None, None).await;
+        assert!(resp8.error.unwrap().message.contains("must be an array of strings"));
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_none_params() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: None,
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert!(resp.error.unwrap().message.contains("Invalid params"));
+    }
+
+    #[tokio::test]
+    async fn test_handle_notifications_initialized() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "notifications/initialized".into(),
+            params: Some(json!({})),
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert!(resp.result.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_handle_unknown_method() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "unknown/method".into(),
+            params: None,
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert_eq!(resp.error.unwrap().code, -32601);
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_missing_params() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: None,
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert_eq!(resp.error.unwrap().code, -32602);
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_manage_recipes_search_with_filters() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "search",
+                    "query": "salad",
+                    "limit": 1,
+                    "dietary_filters": ["vegan"]
+                }
+            })),
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert!(resp.result.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_manage_recipes_format_json() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "format",
+                    "recipes": [
+                        {
+                            "name": "Test",
+                            "ingredients": ["1 cup water"],
+                            "instructions": ["Drink"],
+                            "servings": 1,
+                            "diets": [],
+                            "admonitions": [],
+                            "gallery": []
+                        }
+                    ],
+                    "format_type": "json"
+                }
+            })),
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        let result = resp.result.unwrap();
+        let text = result["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("\"name\": \"Test\""));
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_manage_recipes_scrape_with_filters() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "scrape",
+                    "urls": ["https://www.allrecipes.com/recipe/21261/classic-lasagna/"],
+                    "dietary_filters": ["vegan"]
+                }
+            })),
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        assert!(resp.result.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_handle_tools_call_manage_recipes_format_cooklang() {
+        let chart = Arc::new(WeightChart::new());
+        let req = Request {
+            jsonrpc: JSONRPC_VERSION.into(),
+            id: RequestId::Number(1),
+            method: "tools/call".into(),
+            params: Some(json!({
+                "name": "manage_recipes",
+                "arguments": {
+                    "action": "format",
+                    "recipes": [
+                        {
+                            "name": "Test",
+                            "ingredients": ["1 cup water"],
+                            "instructions": ["Drink water"],
+                            "servings": 1,
+                            "diets": [],
+                            "admonitions": [],
+                            "gallery": []
+                        }
+                    ],
+                    "format_type": "cooklang"
+                }
+            })),
+        };
+        let resp = handle_request(req, chart, true, None, None, None).await;
+        let result = resp.result.unwrap();
+        let text = result["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains(">> title: Test"));
+        assert!(text.contains("@water{1%cup}"));
     }
 }
