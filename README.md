@@ -4,7 +4,7 @@ An MCP server written in Rust for importing, parsing, scaling, formatting, and s
 
 ## :sparkles: Features
 
-- **Intelligent Web Scraping:** Extracts recipes from a wide variety of online sources using a tiered strategy with `rust-recipe` and `recipe-scraper`.
+- **Intelligent Web Scraping:** Extracts recipes from a wide variety of online sources using a tiered strategy with `rust-recipe` and `recipe-scraper`, including advanced image and gallery extraction.
 - **Recipe Scaling:** Adjust servings for any recipe, automatically scaling ingredient quantities.
 - **Weight Conversion:** Automatically converts volumetric measurements (cups, tbsp, tsp) to gram weights using the [King Arthur Baking ingredient weight chart](https://www.kingarthurbaking.com/learn/ingredient-weight-chart).
 - **Unit System Conversion:** Automatically converts volume measurements between Metric and Imperial systems.
@@ -13,7 +13,7 @@ An MCP server written in Rust for importing, parsing, scaling, formatting, and s
 - **Admonition Extraction:** Captures recipe-specific tips, notes, and variations.
 - **Standalone Conversion Tool:** Quickly convert a list of ingredient strings into weighted equivalents or switch unit systems.
 - **Multi-Format Export:** Supports exporting recipes to Markdown, JSON, and Cooklang.
-- **Recipe Discovery:** Integrated search functionality to find recipe URLs from supported providers (AllRecipes, Food Network, Serious Eats, TheMealDB).
+- **Recipe Discovery:** Integrated search functionality to find recipe URLs from supported providers (AllRecipes, Food Network, Serious Eats, TheMealDB, Epicurious, NYT Cooking, BBC Good Food).
 - **Caching:** Built-in recipe caching to reduce redundant network requests.
 - **Flexible Transport:** Supports both `stdio` and `HTTP/SSE` (Server-Sent Events) transport modes.
 - **Flexible Configuration:** Supports TOML, YAML, and JSON configuration files, as well as environment variables and command-line arguments.
@@ -76,7 +76,7 @@ Unified tool for complex recipe operations.
 - `format_type`: Output format (`markdown`, `json`, or `cooklang`, defaults to `markdown`).
 - `query`: Search query (required for `search`).
 - `limit`: Maximum search results (optional for `search`, default 5).
-- `provider`: Recipe provider to search (`allrecipes`, `foodnetwork`, `seriouseats`, `themealdb`).
+- `provider`: Recipe provider to search (`allrecipes`, `foodnetwork`, `seriouseats`, `themealdb`, `epicurious`, `nytcooking`, `bbcgoodfood`).
 - `dietary_filters`: List of dietary preferences (`vegan`, `vegetarian`, `gluten-free`, `dairy-free`, `keto`, `paleo`).
 - `admonition_types`: List of admonition types to extract (`tip`, `note`, `variation`).
 - `bypass_cache`: If true, bypass the cache and force a fresh request (optional, default: false).

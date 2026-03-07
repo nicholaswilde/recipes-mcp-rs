@@ -1,8 +1,0 @@
-{
-  "track_id": "advanced_image_extraction_20260305",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-03-05T22:00:00Z",
-  "updated_at": "2026-03-05T22:00:00Z",
-  "description": "Enhance image extraction to find high-res images and process galleries."
-}

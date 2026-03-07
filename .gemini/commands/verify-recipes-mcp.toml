@@ -1,0 +1,16 @@
+description = "Verifies the recipes MCP server by running unit tests and exercising its core tools."
+
+prompt = '''
+You are a senior engineer tasked with verifying the recipes-mcp-rs server's functionality.
+
+### Verification Steps:
+1.  **Unit Tests**: Run `task test` to ensure all built-in Rust tests pass.
+2.  **Recipe Search**: Use the `manage_recipes` tool with `action="search"` to search for "chocolate chip cookies".
+3.  **Recipe Scraping**: Use the `manage_recipes` tool with `action="scrape"` to fetch a recipe from a reliable provider (e.g., `https://www.food.com/recipe/classic-lasagna-11732`).
+4.  **Ingredient Conversion**: Use the `convert_ingredients` tool to verify weight conversion for a list of common ingredients (e.g., `["1 cup flour", "2 tbsp sugar"]`).
+5.  **Recipe Scaling**: Use the `manage_recipes` tool with `action="scale"` to scale a mock recipe object (ensure all required fields: `name`, `ingredients`, `instructions`, `servings`, `diets`, `admonitions`, `gallery`, etc. are present).
+6.  **Nutrition Estimation**: Use the `manage_recipes` tool with `action="nutrition"` on a mock recipe (e.g., `1 cup granulated sugar`) to verify calorie and macronutrient estimation.
+
+### Reporting:
+Provide a concise summary of the verification results, highlighting any failures or unexpected behavior.
+'''
