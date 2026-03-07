@@ -51,6 +51,9 @@ pub enum RecipeProvider {
     FoodNetwork,
     SeriousEats,
     TheMealDB,
+    Epicurious,
+    NYTCooking,
+    BBCGoodFood,
 }
 
 #[async_trait]
@@ -368,6 +371,340 @@ impl RecipeSearchProvider for SeriousEatsProvider {
 
 pub struct TheMealDBProvider;
 
+pub struct EpicuriousProvider;
+
+pub struct NYTCookingProvider;
+
+pub struct BBCGoodFoodProvider;
+
+#[async_trait]
+impl RecipeSearchProvider for EpicuriousProvider {
+    async fn search(&self, query: &str, limit: u32) -> Result<Vec<SearchResult>, ScraperError> {
+        let client = create_search_client();
+        let url = format!(
+            "https://www.epicurious.com/search?q={}",
+            urlencoding::encode(query)
+        );
+
+        let response = client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
+
+        let html_content = response.text().await.map_err(|e| {
+            ScraperError::ScrapeFailed(format!("Failed to get text from response: {}", e))
+        })?;
+
+        tracing::debug!("HTML length from Epicurious: {}", html_content.len());
+
+        if html_content.contains("Request blocked")
+            || html_content.contains("Cloudflare")
+            || html_content.contains("Just a moment...")
+            || html_content.contains("Access Denied")
+        {
+            tracing::warn!("Request blocked by Cloudflare/Access Denied");
+            return Err(ScraperError::RequestBlocked(
+                "Search request blocked by provider (Cloudflare/Access Denied)".into(),
+            ));
+        }
+
+        let document = Html::parse_document(&html_content);
+        let selectors = [".summary-item", ".recipe-content-card", ".card", "div[class*='SummaryItem']"];
+
+        let mut results = Vec::new();
+        for selector_str in selectors {
+            let selector = Selector::parse(selector_str).unwrap();
+            for element in document.select(&selector) {
+                let title_selectors = [
+                    ".summary-item__hed",
+                    "h3[class*='SummaryItemHed']",
+                    "h3",
+                    "a[class*='SummaryItemHedLink']",
+                    ".hed",
+                ];
+                
+                let mut title = String::new();
+                for ts in title_selectors {
+                    if let Some(title_elem) = element.select(&Selector::parse(ts).unwrap()).next() {
+                        title = title_elem
+                            .text()
+                            .collect::<Vec<_>>()
+                            .join(" ")
+                            .trim()
+                            .to_string();
+                        if !title.is_empty() {
+                            break;
+                        }
+                    }
+                }
+
+                if title.is_empty() {
+                    title = element
+                        .text()
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                        .trim()
+                        .to_string();
+                }
+
+                if title.is_empty() {
+                    continue;
+                }
+
+                // Find link
+                let mut href = None;
+                if element.value().name() == "a" {
+                    href = element.value().attr("href").map(|s| s.to_string());
+                } else {
+                    let link_selectors = ["a[class*='SummaryItemHedLink']", "a"];
+                    for ls in link_selectors {
+                        if let Some(link_elem) = element.select(&Selector::parse(ls).unwrap()).next() {
+                            href = link_elem.value().attr("href").map(|s| s.to_string());
+                            if href.is_some() {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if let Some(mut link) = href {
+                    if !link.starts_with("http") {
+                        if link.starts_with("//") {
+                            link = format!("https:{}", link);
+                        } else if link.starts_with("/") {
+                            link = format!("https://www.epicurious.com{}", link);
+                        }
+                    }
+
+                    // Avoid duplicates
+                    if !results.iter().any(|r: &SearchResult| r.url == link) {
+                        results.push(SearchResult { title, url: link });
+                    }
+                }
+
+                if results.len() >= limit as usize {
+                    break;
+                }
+            }
+            if !results.is_empty() {
+                break;
+            }
+        }
+
+        Ok(results)
+    }
+}
+
+#[async_trait]
+impl RecipeSearchProvider for NYTCookingProvider {
+    async fn search(&self, query: &str, limit: u32) -> Result<Vec<SearchResult>, ScraperError> {
+        let client = create_search_client();
+        let url = format!(
+            "https://cooking.nytimes.com/search?q={}",
+            urlencoding::encode(query)
+        );
+
+        let response = client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
+
+        let html_content = response.text().await.map_err(|e| {
+            ScraperError::ScrapeFailed(format!("Failed to get text from response: {}", e))
+        })?;
+
+        if html_content.contains("Request blocked")
+            || html_content.contains("Cloudflare")
+            || html_content.contains("Just a moment...")
+            || html_content.contains("Access Denied")
+        {
+            return Err(ScraperError::RequestBlocked(
+                "Search request blocked by NYT Cooking".into(),
+            ));
+        }
+
+        let document = Html::parse_document(&html_content);
+        tracing::debug!("Searching for script#__NEXT_DATA__");
+        let script_selector = Selector::parse("script#__NEXT_DATA__").unwrap();
+        
+        if let Some(script_element) = document.select(&script_selector).next() {
+            tracing::debug!("Found script#__NEXT_DATA__");
+            let json_text = script_element.text().collect::<String>();
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&json_text) {
+                tracing::debug!("Parsed JSON from __NEXT_DATA__");
+                let results_array = json.pointer("/props/pageProps/results")
+                    .or_else(|| json.pointer("/props/pageProps/initialData/search/results"))
+                    .and_then(|v| v.as_array());
+
+                if let Some(results_array) = results_array {
+                    tracing::debug!("Found results array with {} items", results_array.len());
+                    let mut results = Vec::new();
+                    for item in results_array {
+                        let title = item["title"].as_str().unwrap_or("").to_string();
+                        let url_path = item["url"].as_str().unwrap_or("");
+                        
+                        if title.is_empty() || url_path.is_empty() {
+                            continue;
+                        }
+
+                        let mut full_url = url_path.to_string();
+                        if full_url.contains('?') {
+                            full_url = full_url.split('?').next().unwrap().to_string();
+                        }
+                        if !full_url.starts_with("http") {
+                            full_url = format!("https://cooking.nytimes.com{}", full_url);
+                        }
+
+                        if !results.iter().any(|r: &SearchResult| r.url == full_url) {
+                            results.push(SearchResult { title, url: full_url });
+                        }
+                        if results.len() >= limit as usize {
+                            break;
+                        }
+                    }
+                    return Ok(results);
+                }
+            }
+        }
+
+        // Fallback to HTML selectors if JSON parsing fails
+        let card_selector = Selector::parse("a[href^='/recipes/']").unwrap();
+        let title_selector = Selector::parse("h3").unwrap();
+
+        let mut results = Vec::new();
+        for card in document.select(&card_selector) {
+            if let Some(title_elem) = card.select(&title_selector).next() {
+                let title = title_elem.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                if title.is_empty() {
+                    continue;
+                }
+                
+                if let Some(href) = card.value().attr("href") {
+                    let mut full_url = href.to_string();
+                    if full_url.contains('?') {
+                        full_url = full_url.split('?').next().unwrap().to_string();
+                    }
+                    if !full_url.starts_with("http") {
+                        full_url = format!("https://cooking.nytimes.com{}", full_url);
+                    }
+
+                    if !results.iter().any(|r: &SearchResult| r.url == full_url) {
+                        results.push(SearchResult { title, url: full_url });
+                    }
+                }
+            }
+            if results.len() >= limit as usize {
+                break;
+            }
+        }
+
+        Ok(results)
+    }
+}
+
+#[async_trait]
+impl RecipeSearchProvider for BBCGoodFoodProvider {
+    async fn search(&self, query: &str, limit: u32) -> Result<Vec<SearchResult>, ScraperError> {
+        let client = create_search_client();
+        let url = format!(
+            "https://www.bbcgoodfood.com/search?q={}",
+            urlencoding::encode(query)
+        );
+
+        let response = client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
+
+        let html_content = response.text().await.map_err(|e| {
+            ScraperError::ScrapeFailed(format!("Failed to get text from response: {}", e))
+        })?;
+
+        if html_content.contains("Request blocked")
+            || html_content.contains("Cloudflare")
+            || html_content.contains("Just a moment...")
+            || html_content.contains("Access Denied")
+        {
+            return Err(ScraperError::RequestBlocked(
+                "Search request blocked by BBC Good Food".into(),
+            ));
+        }
+
+        let document = Html::parse_document(&html_content);
+        let script_selector = Selector::parse("script#\\__POST_CONTENT__").unwrap();
+        
+        if let Some(script_element) = document.select(&script_selector).next() {
+            let json_text = script_element.text().collect::<String>();
+            let items = serde_json::from_str::<serde_json::Value>(&json_text).ok().and_then(|json| {
+                json.pointer("/searchResults/items")
+                    .and_then(|v| v.as_array())
+                    .cloned()
+            });
+
+            if let Some(items) = items {
+                let mut results = Vec::new();
+                for item in items {
+                    let title = item["title"].as_str().unwrap_or("").to_string();
+                    let url_path = item["url"].as_str().unwrap_or("");
+                    
+                    if title.is_empty() || url_path.is_empty() {
+                        continue;
+                    }
+
+                    let mut full_url = url_path.to_string();
+                    if !full_url.starts_with("http") {
+                        if full_url.starts_with("/") {
+                            full_url = format!("https://www.bbcgoodfood.com{}", full_url);
+                        } else {
+                            full_url = format!("https://www.bbcgoodfood.com/{}", full_url);
+                        }
+                    }
+
+                    if !results.iter().any(|r: &SearchResult| r.url == full_url) {
+                        results.push(SearchResult { title, url: full_url });
+                    }
+                    if results.len() >= limit as usize {
+                        break;
+                    }
+                }
+                return Ok(results);
+            }
+        }
+
+        // Fallback to HTML selectors
+        let card_selector = Selector::parse("a.link_link__7WCQy").unwrap();
+        let mut results = Vec::new();
+        for card in document.select(&card_selector) {
+            let title_selector = Selector::parse("h3, h2").unwrap();
+            if let Some(title_elem) = card.select(&title_selector).next() {
+                let title = title_elem.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                if title.is_empty() {
+                    continue;
+                }
+                
+                if let Some(href) = card.value().attr("href") {
+                    let mut full_url = href.to_string();
+                    if !full_url.starts_with("http") {
+                        full_url = format!("https://www.bbcgoodfood.com{}", full_url);
+                    }
+
+                    if !results.iter().any(|r: &SearchResult| r.url == full_url) {
+                        results.push(SearchResult { title, url: full_url });
+                    }
+                }
+            }
+            if results.len() >= limit as usize {
+                break;
+            }
+        }
+
+        Ok(results)
+    }
+}
+
 #[async_trait]
 impl RecipeSearchProvider for TheMealDBProvider {
     async fn search(&self, query: &str, limit: u32) -> Result<Vec<SearchResult>, ScraperError> {
@@ -441,6 +778,9 @@ pub async fn search_recipes(
         RecipeProvider::FoodNetwork => Box::new(FoodNetworkProvider),
         RecipeProvider::SeriousEats => Box::new(SeriousEatsProvider),
         RecipeProvider::TheMealDB => Box::new(TheMealDBProvider),
+        RecipeProvider::Epicurious => Box::new(EpicuriousProvider),
+        RecipeProvider::NYTCooking => Box::new(NYTCookingProvider),
+        RecipeProvider::BBCGoodFood => Box::new(BBCGoodFoodProvider),
     };
 
     let results = p.search(query, limit * 2).await?; // Fetch more to allow for filtering
@@ -559,6 +899,58 @@ mod tests {
         .expect("TheMealDB search failed");
         assert!(!res.is_empty(), "TheMealDB results should not be empty");
         assert!(res[0].url.contains("themealdb.com"));
+    }
+
+    #[tokio::test]
+    async fn test_search_epicurious() {
+        let provider = EpicuriousProvider;
+        let res = provider.search("lasagna", 5).await;
+        match res {
+            Ok(results) => {
+                assert!(!results.is_empty(), "Epicurious results should not be empty");
+                assert!(results[0].url.contains("epicurious.com"));
+            }
+            Err(ScraperError::RequestBlocked(_)) => {
+                tracing::warn!("Epicurious search was blocked during test");
+            }
+            Err(e) => panic!("Epicurious search failed with error: {:?}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_search_nyt_cooking() {
+        let _ = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::DEBUG)
+            .with_test_writer()
+            .try_init();
+        let provider = NYTCookingProvider;
+        let res = provider.search("lasagna", 5).await;
+        match res {
+            Ok(results) => {
+                assert!(!results.is_empty(), "NYT Cooking results should not be empty");
+                assert!(results[0].url.contains("cooking.nytimes.com"));
+            }
+            Err(ScraperError::RequestBlocked(_)) => {
+                tracing::warn!("NYT Cooking search was blocked during test");
+            }
+            Err(e) => panic!("NYT Cooking search failed with error: {:?}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_search_bbc_good_food() {
+        let provider = BBCGoodFoodProvider;
+        let res = provider.search("lasagna", 5).await;
+        match res {
+            Ok(results) => {
+                assert!(!results.is_empty(), "BBC Good Food results should not be empty");
+                assert!(results[0].url.contains("bbcgoodfood.com"));
+            }
+            Err(ScraperError::RequestBlocked(_)) => {
+                tracing::warn!("BBC Good Food search was blocked during test");
+            }
+            Err(e) => panic!("BBC Good Food search failed with error: {:?}", e),
+        }
     }
 
     #[tokio::test]

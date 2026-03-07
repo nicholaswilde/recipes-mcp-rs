@@ -96,7 +96,7 @@ pub async fn handle_request(
                                 },
                                 "provider": {
                                     "type": "string",
-                                    "enum": ["allrecipes", "foodnetwork", "seriouseats", "themealdb"],
+                                    "enum": ["allrecipes", "foodnetwork", "seriouseats", "themealdb", "epicurious", "nytcooking", "bbcgoodfood"],
                                     "description": "The recipe provider to search (optional for 'search' action, default 'allrecipes')"
                                 },
                                 "dietary_filters": {
