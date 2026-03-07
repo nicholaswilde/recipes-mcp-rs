@@ -282,6 +282,7 @@ pub async fn handle_request(
                                         if let Some(types) = &admonition_types {
                                             r.admonitions.retain(|a| types.contains(&a.kind));
                                         }
+                                        r.sanitize_instructions();
                                         r
                                     })
                                     .collect()
@@ -350,6 +351,7 @@ pub async fn handle_request(
                                         if let Some(types) = &admonition_types {
                                             r.admonitions.retain(|a| types.contains(&a.kind));
                                         }
+                                        r.sanitize_instructions();
                                         r
                                     })
                                     .collect()
@@ -516,6 +518,7 @@ pub async fn handle_request(
                                         if let Some(types) = &admonition_types {
                                             r.admonitions.retain(|a| types.contains(&a.kind));
                                         }
+                                        r.sanitize_instructions();
                                         r
                                     })
                                     .collect()

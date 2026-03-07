@@ -111,7 +111,12 @@ impl From<Box<dyn RecipeInformationProvider>> for Recipe {
             name: provider.name(),
             description: provider.description(),
             ingredients: provider.ingredients().unwrap_or_default(),
-            instructions: provider.instructions().unwrap_or_default(),
+            instructions: provider
+                .instructions()
+                .unwrap_or_default()
+                .into_iter()
+                .filter_map(|i| sanitize_instruction(&i))
+                .collect(),
             prep_time: provider.prep_time().map(|d| format!("{}s", d.as_secs())),
             cook_time: provider.cook_time().map(|d| format!("{}s", d.as_secs())),
             total_time: provider.total_time().map(|d| format!("{}s", d.as_secs())),
@@ -136,11 +141,13 @@ impl From<SchemaOrgRecipe> for Recipe {
 
         let instructions = if let Some(instruction_list) = schema.directions() {
             if let Some(dirs) = instruction_list.directions() {
-                dirs.iter().map(|i| i.to_string()).collect()
+                dirs.iter()
+                    .filter_map(|i| sanitize_instruction(&i.to_string()))
+                    .collect()
             } else if let Some(sections) = instruction_list.sections() {
                 sections
                     .flat_map(|section| section.clone().into_iter())
-                    .map(|i| i.to_string())
+                    .filter_map(|i| sanitize_instruction(&i.to_string()))
                     .collect()
             } else {
                 vec![]
@@ -200,6 +207,14 @@ impl Recipe {
         for ingredient in self.ingredients.iter_mut() {
             *ingredient = crate::conversion::engine::format_with_weight(ingredient, chart);
         }
+    }
+
+    pub fn sanitize_instructions(&mut self) {
+        self.instructions = self
+            .instructions
+            .iter()
+            .filter_map(|i| sanitize_instruction(i))
+            .collect();
     }
 
     pub fn get_ingredient_weights(
@@ -489,6 +504,40 @@ fn add_image_value_to_gallery(value: &serde_json::Value, gallery: &mut Vec<Strin
         }
         _ => {}
     }
+}
+
+pub fn sanitize_instruction(text: &str) -> Option<String> {
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    let fluff_patterns = [
+        r"(?i)^ad:",
+        r"(?i)sign up",
+        r"(?i)newsletter",
+        r"(?i)follow (us|me|on)",
+        r"(?i)enjoy",
+        r"(?i)rate this",
+        r"(?i)instagram",
+        r"(?i)facebook",
+        r"(?i)pinterest",
+        r"(?i)twitter",
+        r"(?i)tiktok",
+        r"(?i)when I was in",
+        r"(?i)grandmother used to",
+        r"(?i)first made this",
+    ];
+
+    for pattern in fluff_patterns {
+        if let Ok(re) = regex::Regex::new(pattern)
+            && re.is_match(trimmed)
+        {
+            return None;
+        }
+    }
+
+    Some(trimmed.to_string())
 }
 
 pub async fn scrape_recipe(
@@ -1145,5 +1194,28 @@ mod tests {
         let schema2: SchemaOrgRecipe = serde_json::from_str(json2).unwrap();
         let recipe2 = Recipe::from(schema2);
         assert_eq!(recipe2.instructions.len(), 0);
+    }
+
+    #[test]
+    fn test_sanitize_instruction() {
+        let cases = vec![
+            ("Mix the flour and water.", Some("Mix the flour and water.")),
+            ("Enjoy your meal!", None),
+            ("Ad: Check out our pans", None),
+            ("Sign up for my newsletter for more!", None),
+            ("I first made this in 1995 when I was in Paris.", None),
+            ("Follow me on Instagram @chef", None),
+            (
+                "Step 1: Preheat the oven.",
+                Some("Step 1: Preheat the oven."),
+            ),
+            ("", None),
+            ("   ", None),
+        ];
+
+        for (input, expected) in cases {
+            let actual = sanitize_instruction(input);
+            assert_eq!(actual.as_deref(), expected, "Failed for input: {}", input);
+        }
     }
 }
