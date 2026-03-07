@@ -37,7 +37,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     run_app(config, stdin.lock(), stdout).await
 }
 
-async fn run_app<R, W>(config: AppConfig, reader: R, mut writer: W) -> Result<(), Box<dyn std::error::Error>>
+async fn run_app<R, W>(
+    config: AppConfig,
+    reader: R,
+    mut writer: W,
+) -> Result<(), Box<dyn std::error::Error>>
 where
     R: BufRead,
     W: Write,
@@ -177,10 +181,10 @@ mod tests {
         let res = run_app(config, &input[..], &mut output).await;
         assert!(res.is_ok());
         assert!(output.is_empty());
-        }
+    }
 
-        #[tokio::test]
-        async fn test_run_app_with_empty_line() {
+    #[tokio::test]
+    async fn test_run_app_with_empty_line() {
         let config = AppConfig {
             transport: "stdio".into(),
             port: 8080,
@@ -196,11 +200,10 @@ mod tests {
         let res = run_app(config, &input[..], &mut output).await;
         assert!(res.is_ok());
         assert!(output.is_empty());
-        }
+    }
 
-        #[tokio::test]
-        async fn test_run_app_http() {
-
+    #[tokio::test]
+    async fn test_run_app_http() {
         let _config = AppConfig {
             transport: "http".into(),
             port: 0, // Should find a random port or just start and fail binding

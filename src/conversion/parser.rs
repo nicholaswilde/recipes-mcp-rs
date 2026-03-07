@@ -206,4 +206,28 @@ mod tests {
         assert_eq!(res.unit, "cups");
         assert_eq!(res.ingredient, "packed brown sugar");
     }
+
+    #[test]
+    fn test_parse_mixed_fraction() {
+        let res = parse_ingredient("1 1/2 cups flour").unwrap();
+        assert_eq!(res.value, 1.5);
+        assert_eq!(res.unit, "cups");
+        assert_eq!(res.ingredient, "flour");
+    }
+
+    #[test]
+    fn test_parse_decimal() {
+        let res = parse_ingredient("1.5 cups milk").unwrap();
+        assert_eq!(res.value, 1.5);
+        assert_eq!(res.unit, "cups");
+        assert_eq!(res.ingredient, "milk");
+    }
+
+    #[test]
+    fn test_parse_numeric_value() {
+        assert_eq!(parse_numeric_value("1 1/4"), Some(1.25));
+        assert_eq!(parse_numeric_value("3/4"), Some(0.75));
+        assert_eq!(parse_numeric_value("2.5"), Some(2.5));
+        assert_eq!(parse_numeric_value("invalid"), None);
+    }
 }

@@ -153,7 +153,7 @@ mod tests {
     #[test]
     fn test_convert_tsp() {
         let amt = parse_ingredient("2ml water").unwrap();
-        let (val, unit) = convert_volume(&amt, UnitSystem::Imperial).unwrap();
+        let (_val, unit) = convert_volume(&amt, UnitSystem::Imperial).unwrap();
         assert_eq!(unit, "tsp");
     }
 

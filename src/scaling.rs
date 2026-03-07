@@ -98,4 +98,26 @@ mod tests {
     fn test_no_quantity() {
         assert_eq!(scale_quantity("salt to taste", 2.0), "salt to taste");
     }
+
+    #[test]
+    fn test_scale_one() {
+        assert_eq!(scale_quantity("1 cup", 1.0), "1 cup");
+    }
+
+    #[test]
+    fn test_format_thirds() {
+        assert_eq!(scale_quantity("1 cup", 1.0 / 3.0), "1/3 cup");
+        assert_eq!(scale_quantity("2 cup", 1.0 / 3.0), "2/3 cup");
+    }
+
+    #[test]
+    fn test_format_quarters() {
+        assert_eq!(scale_quantity("1 cup", 0.25), "1/4 cup");
+        assert_eq!(scale_quantity("3 cup", 0.25), "3/4 cup");
+    }
+
+    #[test]
+    fn test_format_decimal_fallback() {
+        assert_eq!(scale_quantity("1 cup", 0.1), "0.1 cup");
+    }
 }

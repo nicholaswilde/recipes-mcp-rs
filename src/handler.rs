@@ -720,7 +720,7 @@ mod tests {
         assert_eq!(resp.id, RequestId::Number(1));
         let result = resp.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
-        
+
         let tool_names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
         assert!(tool_names.contains(&"manage_recipes"));
         assert!(tool_names.contains(&"convert_ingredients"));
@@ -918,7 +918,7 @@ mod tests {
     #[tokio::test]
     async fn test_handle_tools_call_manage_recipes_errors() {
         let chart = Arc::new(WeightChart::new());
-        
+
         // Test invalid arguments
         let req1 = Request {
             jsonrpc: JSONRPC_VERSION.into(),
@@ -933,7 +933,13 @@ mod tests {
             })),
         };
         let resp1 = handle_request(req1, chart.clone(), true, None, None, None).await;
-        assert!(resp1.error.unwrap().message.contains("target_servings must be greater than 0"));
+        assert!(
+            resp1
+                .error
+                .unwrap()
+                .message
+                .contains("target_servings must be greater than 0")
+        );
 
         // Test missing urls/recipes
         let req2 = Request {
@@ -949,7 +955,13 @@ mod tests {
             })),
         };
         let resp2 = handle_request(req2, chart.clone(), true, None, None, None).await;
-        assert!(resp2.error.unwrap().message.contains("Either 'urls' or 'recipes' must be provided"));
+        assert!(
+            resp2
+                .error
+                .unwrap()
+                .message
+                .contains("Either 'urls' or 'recipes' must be provided")
+        );
 
         // Test dietary filtering failure
         let req3 = Request {
@@ -994,7 +1006,13 @@ mod tests {
             })),
         };
         let resp4 = handle_request(req4, chart.clone(), true, None, None, None).await;
-        assert!(resp4.error.unwrap().message.contains("Either 'urls' or 'recipes' must be provided"));
+        assert!(
+            resp4
+                .error
+                .unwrap()
+                .message
+                .contains("Either 'urls' or 'recipes' must be provided")
+        );
 
         // Test invalid action
         let req5 = Request {
@@ -1052,7 +1070,13 @@ mod tests {
             })),
         };
         let resp8 = handle_request(req8, chart.clone(), true, None, None, None).await;
-        assert!(resp8.error.unwrap().message.contains("must be an array of strings"));
+        assert!(
+            resp8
+                .error
+                .unwrap()
+                .message
+                .contains("must be an array of strings")
+        );
     }
 
     #[tokio::test]

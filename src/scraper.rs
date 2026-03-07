@@ -1012,4 +1012,138 @@ mod tests {
         assert!(gallery.contains(&"http://example.com/step2.jpg".to_string()));
         assert!(gallery.contains(&"http://example.com/final.jpg".to_string()));
     }
+
+    #[test]
+    fn test_schema_org_recipe_from() {
+        let html = r#"
+            <script type="application/ld+json">
+            {
+                "@context": "https://schema.org/",
+                "@type": "Recipe",
+                "name": "Test Recipe",
+                "description": "A test recipe",
+                "recipeIngredient": ["1 cup flour"],
+                "recipeInstructions": [
+                    {
+                        "@type": "HowToStep",
+                        "text": "Mix everything"
+                    }
+                ],
+                "recipeYield": "4 servings",
+                "prepTime": "PT10M",
+                "cookTime": "PT20M"
+            }
+            </script>
+        "#;
+        let entries = SchemaOrgEntry::scrape_html(html);
+        let recipes: Vec<SchemaOrgRecipe> = entries
+            .into_iter()
+            .flat_map(|e| e.extract_recipes())
+            .collect();
+        assert_eq!(recipes.len(), 1);
+
+        let recipe = Recipe::from(recipes[0].clone());
+        assert_eq!(recipe.name, Some("Test Recipe".into()));
+        assert_eq!(recipe.ingredients, vec!["1 cup flour".to_string()]);
+        assert_eq!(recipe.instructions, vec!["Mix everything".to_string()]);
+        assert_eq!(recipe.servings, Some(4));
+        assert_eq!(recipe.prep_time, Some("10m".into()));
+        assert_eq!(recipe.cook_time, Some("20m".into()));
+    }
+
+    #[test]
+    fn test_schema_org_recipe_from_with_sections() {
+        let json = r#"
+            {
+                "name": "Sectional Recipe",
+                "description": "A sectional test recipe",
+                "recipeIngredient": ["Item 1"],
+                "recipeInstructions": [
+                    {
+                        "@type": "HowToSection",
+                        "name": "Section 1",
+                        "itemListElement": [
+                            {
+                                "@type": "HowToStep",
+                                "text": "Step 1"
+                            }
+                        ]
+                    },
+                    {
+                        "@type": "HowToSection",
+                        "name": "Section 2",
+                        "itemListElement": [
+                            {
+                                "@type": "HowToStep",
+                                "text": "Step 2"
+                            }
+                        ]
+                    }
+                ]
+            }
+        "#;
+        let schema: SchemaOrgRecipe = serde_json::from_str(json).unwrap();
+        let recipe = Recipe::from(schema);
+        assert_eq!(recipe.name, Some("Sectional Recipe".into()));
+        assert_eq!(
+            recipe.instructions,
+            vec!["Step 1".to_string(), "Step 2".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_recipe_scale_zero() {
+        let mut recipe = Recipe {
+            ingredients: vec!["1 cup flour".into()],
+            servings: Some(4),
+            ..Recipe::default()
+        };
+        recipe.scale(0);
+        assert_eq!(recipe.servings, Some(4)); // Should not change
+        assert_eq!(recipe.ingredients[0], "1 cup flour");
+
+        recipe.servings = Some(0);
+        recipe.scale(8);
+        assert_eq!(recipe.servings, Some(0)); // Should not change
+    }
+
+    #[test]
+    fn test_parse_admonitions_duplicate() {
+        let html = r#"
+            <div class="notes">Duplicate note.</div>
+            <div class="notes">Duplicate note.</div>
+            <div class="notes">Short</div>
+        "#;
+        let document = scraper::Html::parse_document(html);
+        let admonitions = parse_admonitions_from_html(&document);
+
+        assert_eq!(admonitions.len(), 1);
+        assert_eq!(admonitions[0].content, "Duplicate note.");
+    }
+
+    #[test]
+    fn test_schema_org_recipe_from_no_instructions() {
+        let json = r#"
+            {
+                "name": "No Instruction Recipe",
+                "description": "A recipe without instructions",
+                "recipeIngredient": ["1 cup water"],
+                "recipeInstructions": null
+            }
+        "#;
+        let schema: SchemaOrgRecipe = serde_json::from_str(json).unwrap();
+        let recipe = Recipe::from(schema);
+        assert_eq!(recipe.instructions.len(), 0);
+
+        let json2 = r#"
+            {
+                "name": "No Instruction Recipe 2",
+                "description": "A recipe without instructions",
+                "recipeIngredient": ["1 cup water"]
+            }
+        "#;
+        let schema2: SchemaOrgRecipe = serde_json::from_str(json2).unwrap();
+        let recipe2 = Recipe::from(schema2);
+        assert_eq!(recipe2.instructions.len(), 0);
+    }
 }

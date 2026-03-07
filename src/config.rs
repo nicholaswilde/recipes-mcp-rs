@@ -262,4 +262,24 @@ mod tests {
         let config = AppConfig::load(args).unwrap();
         assert_eq!(config.port, 9999);
     }
+
+    #[test]
+    #[serial]
+    fn test_nutrition_config_override() {
+        let args = Args {
+            config_path: None,
+            log_level: None,
+            transport: Some("http".into()),
+            port: None,
+            weight_conversion: None,
+            cache_enabled: None,
+            cache_dir: None,
+            nutrition_app_id: Some("my_id".into()),
+            nutrition_app_key: Some("my_key".into()),
+        };
+        let config = AppConfig::load(args).unwrap();
+        assert_eq!(config.transport, "http");
+        assert_eq!(config.nutrition_app_id, Some("my_id".into()));
+        assert_eq!(config.nutrition_app_key, Some("my_key".into()));
+    }
 }
