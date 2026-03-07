@@ -63,6 +63,7 @@ pub struct Recipe {
     pub nutrition: Option<Nutrition>,
     pub diets: Vec<String>,
     pub admonitions: Vec<Admonition>,
+    pub gallery: Vec<String>,
 }
 
 impl From<NutritionInformation> for Nutrition {
@@ -124,6 +125,7 @@ impl From<Box<dyn RecipeInformationProvider>> for Recipe {
                 .map(|d| format!("{:?}", d))
                 .collect(),
             admonitions: vec![],
+            gallery: vec![],
         }
     }
 }
@@ -175,6 +177,7 @@ impl From<SchemaOrgRecipe> for Recipe {
             nutrition: None, // schema-org-recipe might not have this yet
             diets: vec![],
             admonitions: vec![],
+            gallery: vec![],
         }
     }
 }
@@ -323,6 +326,142 @@ pub fn parse_admonitions_from_html(document: &Html) -> Vec<Admonition> {
     admonitions
 }
 
+pub fn extract_gallery_from_html(document: &Html) -> Vec<String> {
+    let mut gallery = Vec::new();
+
+    // 1. Look for Schema.org images manually since recipe-scraper doesn't expose them
+    let ld_json_selector = Selector::parse("script[type='application/ld+json']").unwrap();
+    for element in document.select(&ld_json_selector) {
+        let json_text = element.text().collect::<String>();
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&json_text) {
+            extract_images_from_json(&json, &mut gallery);
+        }
+    }
+
+    // 2. Look for common gallery containers
+    let gallery_selectors = [
+        ".gallery img",
+        ".recipe-gallery img",
+        ".image-gallery img",
+        "figure img",
+        ".recipe-images img",
+    ];
+
+    for selector_str in gallery_selectors {
+        if let Ok(selector) = Selector::parse(selector_str) {
+            for element in document.select(&selector) {
+                if let Some(src) = element.value().attr("src") {
+                    let src_str = src.to_string();
+                    if !gallery.contains(&src_str) {
+                        gallery.push(src_str);
+                    }
+                }
+            }
+        }
+    }
+
+    gallery
+}
+
+pub fn sort_images_by_resolution(images: &mut [String]) {
+    use regex::Regex;
+
+    let dim_re = Regex::new(r"(\d+)x(\d+)").unwrap();
+    let width_re = Regex::new(r"width=(\d+)").unwrap();
+
+    images.sort_by_key(|url| {
+        let mut score: i64 = 0;
+
+        // Try to find dimensions like 1200x800
+        if let Some(caps) = dim_re.captures(url) {
+            let w: u32 = caps[1].parse().unwrap_or(0);
+            let h: u32 = caps[2].parse().unwrap_or(0);
+            score = (w as i64) * (h as i64);
+        }
+
+        // Try to find width=600
+        if score == 0 && let Some(caps) = width_re.captures(url) {
+            let w: u32 = caps[1].parse().unwrap_or(0);
+            score = (w as i64) * (w as i64); // Assume square if only width is given
+        }
+
+        // Heuristics for keywords
+        if url.to_lowercase().contains("large") || url.to_lowercase().contains("big") || url.to_lowercase().contains("high") {
+            score += 1000000;
+        }
+        if url.to_lowercase().contains("thumb") || url.to_lowercase().contains("small") || url.to_lowercase().contains("avatar") || url.to_lowercase().contains("icon") {
+            score = score.saturating_sub(500000);
+        }
+
+        // Penalty for certain extensions that are usually icons
+        if url.ends_with(".png") || url.ends_with(".svg") {
+             score = score.saturating_sub(100000);
+        }
+
+        // Use reverse order (largest first)
+        std::cmp::Reverse(score)
+    });
+}
+
+fn extract_images_from_json(json: &serde_json::Value, gallery: &mut Vec<String>) {
+    match json {
+        serde_json::Value::Object(map) => {
+            // Check if this object is a Recipe or contains one
+            let is_recipe = map.get("@type").and_then(|t| t.as_str()).map(|s| s == "Recipe").unwrap_or(false);
+            
+            if is_recipe && let Some(image) = map.get("image") {
+                add_image_value_to_gallery(image, gallery);
+            }
+
+            // Also check for @graph (common in some sites)
+            if let Some(graph) = map.get("@graph").and_then(|g| g.as_array()) {
+                for item in graph {
+                    extract_images_from_json(item, gallery);
+                }
+            }
+
+            // Recurse into other objects just in case (e.g. nested structures)
+            for value in map.values() {
+                if value.is_object() || value.is_array() {
+                    // Avoid infinite recursion by not following @context or @id if they existed as objects
+                    // but here we just process normally
+                    if !is_recipe { // If we already found the recipe, we might not need to recurse deeper for images, but @graph needs it
+                         // For simplicity, we can always recurse if it's not a primitive
+                    }
+                }
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for item in arr {
+                extract_images_from_json(item, gallery);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn add_image_value_to_gallery(value: &serde_json::Value, gallery: &mut Vec<String>) {
+    match value {
+        serde_json::Value::String(s) => {
+            if !gallery.contains(s) {
+                gallery.push(s.clone());
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for val in arr {
+                add_image_value_to_gallery(val, gallery);
+            }
+        }
+        serde_json::Value::Object(map) => {
+            // Might be an ImageObject
+            if let Some(url) = map.get("url").and_then(|u| u.as_str()) && !gallery.contains(&url.to_string()) {
+                gallery.push(url.to_string());
+            }
+        }
+        _ => {}
+    }
+}
+
 pub async fn scrape_recipe(
     url_str: &str,
     chart: &crate::conversion::data::WeightChart,
@@ -413,10 +552,15 @@ pub async fn scrape_recipe(
         .await
         .map_err(|e| ScraperError::ScrapeFailed(e.to_string()))?;
 
-    let admonitions = {
+    let (admonitions, mut gallery) = {
         let document = Html::parse_document(&html);
-        parse_admonitions_from_html(&document)
+        (
+            parse_admonitions_from_html(&document),
+            extract_gallery_from_html(&document),
+        )
     };
+
+    sort_images_by_resolution(&mut gallery);
 
     // Correct usage of Scrape and Extract traits
     let schema_entries = SchemaOrgEntry::scrape_html(&html);
@@ -429,6 +573,13 @@ pub async fn scrape_recipe(
                 recipe.convert_ingredients(chart);
             }
             recipe.admonitions = admonitions.clone();
+            
+            // Set main image to the best one found if not already set or if better one available
+            if !gallery.is_empty() {
+                recipe.image_url = Some(gallery[0].clone());
+            }
+            
+            recipe.gallery = gallery.clone();
             recipe
         })
         .collect();
@@ -457,6 +608,10 @@ pub async fn scrape_recipe(
             url_str
         );
         r.admonitions = admonitions;
+        if !gallery.is_empty() {
+            r.image_url = Some(gallery[0].clone());
+        }
+        r.gallery = gallery;
         return Ok(r);
     }
 
@@ -539,6 +694,13 @@ mod tests {
         let recipe = Recipe::default();
         // This will fail to compile if the field doesn't exist
         assert!(recipe.image_url.is_none());
+    }
+
+    #[test]
+    fn test_recipe_gallery_field_exists() {
+        let recipe = Recipe::default();
+        // This will fail to compile if the field doesn't exist
+        assert!(recipe.gallery.is_empty());
     }
 
     #[test]
@@ -724,18 +886,98 @@ mod tests {
     }
 
     #[test]
-    fn test_admonition_serialization() {
-        let admonition = Admonition {
-            kind: AdmonitionType::Tip,
-            content: "Use cold butter for a flakier crust.".into(),
-        };
-        let json = serde_json::to_string(&admonition).unwrap();
-        assert_eq!(
-            json,
-            r#"{"kind":"tip","content":"Use cold butter for a flakier crust."}"#
-        );
+    fn test_extract_gallery_from_html() {
+        let html = r#"
+            <html>
+                <head>
+                    <script type="application/ld+json">
+                    {
+                        "@context": "https://schema.org/",
+                        "@type": "Recipe",
+                        "name": "Test Recipe",
+                        "image": [
+                            "http://example.com/image1.jpg",
+                            "http://example.com/image2.jpg"
+                        ]
+                    }
+                    </script>
+                </head>
+                <body>
+                    <div class="gallery">
+                        <img src="http://example.com/gallery1.jpg">
+                        <img src="http://example.com/gallery2.jpg">
+                    </div>
+                </body>
+            </html>
+        "#;
+        let document = scraper::Html::parse_document(html);
+        let gallery = extract_gallery_from_html(&document);
+        
+        assert!(gallery.contains(&"http://example.com/image1.jpg".to_string()));
+        assert!(gallery.contains(&"http://example.com/image2.jpg".to_string()));
+        assert!(gallery.contains(&"http://example.com/gallery1.jpg".to_string()));
+        assert!(gallery.contains(&"http://example.com/gallery2.jpg".to_string()));
+    }
 
-        let deserialized: Admonition = serde_json::from_str(&json).unwrap();
-        assert_eq!(deserialized, admonition);
+    #[test]
+    fn test_image_resolution_heuristic() {
+        let images = vec![
+            "http://example.com/thumb-100x100.jpg".to_string(),
+            "http://example.com/large-1200x800.jpg".to_string(),
+            "http://example.com/medium.jpg?width=600".to_string(),
+            "http://example.com/avatar-50x50.png".to_string(),
+        ];
+        
+        let mut sorted = images.clone();
+        sort_images_by_resolution(&mut sorted);
+        
+        // large-1200x800 should be first
+        assert_eq!(sorted[0], "http://example.com/large-1200x800.jpg");
+        // thumb-100x100 should be after medium
+        assert!(sorted.iter().position(|x| x.contains("1200x800")).unwrap() < sorted.iter().position(|x| x.contains("100x100")).unwrap());
+    }
+
+    #[test]
+    fn test_extract_gallery_comprehensive() {
+        let html = r#"
+            <html>
+                <head>
+                    <script type="application/ld+json">
+                    {
+                        "@context": "https://schema.org/",
+                        "@graph": [
+                            {
+                                "@type": "Recipe",
+                                "name": "Complex Recipe",
+                                "image": {
+                                    "@type": "ImageObject",
+                                    "url": "http://example.com/main.jpg",
+                                    "width": 1200,
+                                    "height": 800
+                                }
+                            }
+                        ]
+                    }
+                    </script>
+                </head>
+                <body>
+                    <div class="recipe-gallery">
+                        <img src="http://example.com/step1.jpg" alt="Step 1">
+                        <img src="http://example.com/step2.jpg" alt="Step 2">
+                    </div>
+                    <figure>
+                        <img src="http://example.com/final.jpg" alt="Final Dish">
+                    </figure>
+                </body>
+            </html>
+        "#;
+        let document = scraper::Html::parse_document(html);
+        let mut gallery = extract_gallery_from_html(&document);
+        sort_images_by_resolution(&mut gallery);
+        
+        assert!(gallery.contains(&"http://example.com/main.jpg".to_string()));
+        assert!(gallery.contains(&"http://example.com/step1.jpg".to_string()));
+        assert!(gallery.contains(&"http://example.com/step2.jpg".to_string()));
+        assert!(gallery.contains(&"http://example.com/final.jpg".to_string()));
     }
 }

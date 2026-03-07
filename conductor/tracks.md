@@ -6,7 +6,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Advanced Image and Gallery Extraction**
+- [~] **Track: Advanced Image and Gallery Extraction**
 *Link: [./tracks/advanced_image_extraction_20260305/](./tracks/advanced_image_extraction_20260305/)*
 
 ---

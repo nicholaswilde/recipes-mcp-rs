@@ -1,8 +1,0 @@
-{
-  "track_id": "extra_search_providers_20260305",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-03-05T22:00:00Z",
-  "updated_at": "2026-03-05T22:00:00Z",
-  "description": "Expand recipe discovery with additional search providers (Epicurious, NYT, BBC)."
-}

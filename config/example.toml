@@ -1,0 +1,28 @@
+# Recipes MCP Server Configuration Example
+
+# Log level for the application (trace, debug, info, warn, error)
+# Default: "info"
+log_level = "info"
+
+# Transport mode for the MCP server (stdio, http)
+# Default: "stdio"
+transport = "http"
+
+# Port to listen on when using http transport
+# Default: 3000
+port = 8080
+
+# Note: SSL/TLS is not currently supported in the HTTP transport mode,
+# so the server always runs in plain HTTP (unencrypted).
+
+# Enable or disable automatic volumetric to weight conversion
+# Default: true
+weight_conversion = true
+
+# Enable or disable caching for search results and scraped recipes
+# Default: true
+cache_enabled = true
+
+# Directory to store the cache files
+# Default: ".cache"
+cache_dir = ".cache"
