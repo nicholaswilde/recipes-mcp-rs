@@ -1,10 +1,17 @@
 # :stew: Recipes MCP Server :robot:
 
+[![Coverage Status](https://coveralls.io/repos/github/nicholaswilde/recipes-mcp-rs/badge.svg?branch=main)](https://coveralls.io/github/nicholaswilde/recipes-mcp-rs?branch=main)
+[![task](https://img.shields.io/badge/Task-Enabled-brightgreen?style=for-the-badge&logo=task&logoColor=white)](https://taskfile.dev/#/)
+[![ci](https://img.shields.io/github/actions/workflow/status/nicholaswilde/recipes-mcp-rs/ci.yml?label=ci&style=for-the-badge&branch=main&logo=github-actions)](https://github.com/nicholaswilde/recipes-mcp-rs/actions/workflows/ci.yml)
+
+> [!WARNING]
+> This project is currently in active development (v0.X.X) and is **not production-ready**. Features may change, and breaking changes may occur without notice. **Use this MCP server at your own risk.**
+
 An MCP server written in Rust for importing, parsing, scaling, formatting, and searching recipes from the internet.
 
 ## :sparkles: Features
 
-- **Intelligent Web Scraping:** Extracts recipes from a wide variety of online sources using a tiered strategy with `rust-recipe` and `recipe-scraper`, including advanced image and gallery extraction.
+- **Intelligent Web Scraping:** Extracts recipes from a wide variety of online sources using a tiered strategy with `rust-recipe` and `recipe-scraper`, including advanced image and gallery extraction and automatic instruction sanitization.
 - **Recipe Scaling:** Adjust servings for any recipe, automatically scaling ingredient quantities.
 - **Weight Conversion:** Automatically converts volumetric measurements (cups, tbsp, tsp) to gram weights using the [King Arthur Baking ingredient weight chart](https://www.kingarthurbaking.com/learn/ingredient-weight-chart).
 - **Unit System Conversion:** Automatically converts volume measurements between Metric and Imperial systems.
@@ -17,6 +24,7 @@ An MCP server written in Rust for importing, parsing, scaling, formatting, and s
 - **Caching:** Built-in recipe caching to reduce redundant network requests.
 - **Flexible Transport:** Supports both `stdio` and `HTTP/SSE` (Server-Sent Events) transport modes.
 - **Flexible Configuration:** Supports TOML, YAML, and JSON configuration files, as well as environment variables and command-line arguments.
+- **High Reliability:** Maintained with over 90% code coverage.
 
 ## :package: Installation
 
@@ -120,6 +128,14 @@ task test
 
 ```bash
 task test:ci
+```
+
+### :bar_chart: Code Coverage
+
+The project maintains high code quality with over 90% test coverage.
+
+```bash
+task coverage
 ```
 
 ## :page_facing_up: License
