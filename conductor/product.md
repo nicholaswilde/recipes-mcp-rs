@@ -13,7 +13,7 @@ To provide a robust, automated interface for importing and parsing recipes from 
 - Integration platforms that utilize MCP for data enrichment.
 
 ## Core Features
-- **Intelligent Web Scraping:** Employs a tiered strategy using `rust-recipe` and `recipe-scraper` with automatic fallback and advanced image/gallery extraction to ensure high-reliability data collection.
+- **Intelligent Web Scraping:** Employs a tiered strategy using `rust-recipe` and `recipe-scraper` with automatic fallback, advanced image/gallery extraction, and automatic instruction sanitization to ensure high-reliability data collection.
 - **Unified Tool Management:** Consolidates granular operations into a single, action-oriented toolset (`manage_recipes`) to optimize token usage.
 - **Bulk Processing:** Supports simultaneous scraping and parsing of multiple URLs in a single request for improved efficiency.
 - **Recipe Scaling:** Allows users to adjust servings for any recipe, automatically scaling ingredient quantities while maintaining formatting.
