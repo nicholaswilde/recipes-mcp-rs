@@ -232,7 +232,7 @@ jobs:
         fi
 
         # Copy other files
-        cp {README.md,LICENSE,config.toml.example} "$staging/"
+        cp {README.md,LICENSE} "$staging/"
         
         # Compress
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
