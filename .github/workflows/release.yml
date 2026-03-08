@@ -195,6 +195,8 @@ jobs:
         echo "C:\Strawberry\perl\bin" >> $GITHUB_PATH
         echo "C:\Strawberry\perl\site\bin" >> $GITHUB_PATH
         echo "C:\Strawberry\c\bin" >> $GITHUB_PATH
+        # Also set PERL env var explicitly
+        echo "PERL=C:\Strawberry\perl\bin\perl.exe" >> $GITHUB_ENV
       shell: bash
         
     - name: Build release binary
