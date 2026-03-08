@@ -11,16 +11,18 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Recipe Content Sanitization**
-*Link: [./tracks/recipe_sanitization_20260305/](./tracks/recipe_sanitization_20260305/)*
-
----
-
 ## Completed Tracks
 
 ---
 
+- [x] **Track: Recipe Content Sanitization**
+- Link: [recipe_sanitization_20260305](./archive/recipe_sanitization_20260305/index.md)
+- Description: Improve readability by stripping non-instructional "fluff" from recipe directions.
+
+---
+
 - [x] **Track: Coverage Refinement (90%)**
+
 - Link: [coverage_refinement_20260307](./archive/coverage_refinement_20260307/index.md)
 - Description: Achieve a minimum of 90% total code coverage and finalize Coveralls integration.
 
